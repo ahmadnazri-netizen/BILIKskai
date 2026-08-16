@@ -214,7 +214,23 @@
         // --- Firebase Setup ---
         async function initFirebase() {
             try {
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                // Ensure a safe fallback for the config object to prevent missing property errors
+                let firebaseConfig = {};
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    try {
+                        firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+                    } catch (e) { console.warn("Failed to parse __firebase_config", e); }
+                }
+                
+                // Provide dummy properties if actual config is somehow empty in this environment
+                if (!firebaseConfig.projectId) {
+                    firebaseConfig = {
+                        apiKey: "dummy-api-key",
+                        projectId: "dummy-project-id",
+                        appId: "dummy-app-id"
+                    };
+                }
+
                 const app = window.initializeApp(firebaseConfig);
                 state.db = window.getFirestore(app);
                 const auth = window.getAuth(app);
