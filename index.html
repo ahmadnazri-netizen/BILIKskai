@@ -178,6 +178,23 @@
         
         try {
             if (typeof __app_id !== 'undefined') appId = __app_id;
+            
+            // =====================================================================
+            // NOTA PENTING UNTUK GITHUB PAGES:
+            // Apabila anda memuat naik fail ini ke GitHub, sila buang kod 
+            // `typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;`
+            // dan gantikan dengan konfigurasi Firebase anda sendiri seperti contoh di bawah:
+            //
+            // const firebaseConfig = {
+            //     apiKey: "API_KEY_ANDA",
+            //     authDomain: "PROJEK_ANDA.firebaseapp.com",
+            //     projectId: "PROJEK_ANDA",
+            //     storageBucket: "PROJEK_ANDA.firebasestorage.app",
+            //     messagingSenderId: "123456789",
+            //     appId: "1:123456789:web:abcdef123456"
+            // };
+            // =====================================================================
+            
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
             
             if (firebaseConfig) {
@@ -196,18 +213,16 @@
                         setupRealtimeListeners();
                     } catch (e) {
                         console.error("Auth error:", e);
-                        updateSyncStatus("Gagal menyambung ke awan", true);
-                        fallbackToLocalData();
+                        updateSyncStatus("Gagal log masuk ke awan", true);
                     }
                 };
                 initAuth();
             } else {
-                throw new Error("No config");
+                throw new Error("Sila masukkan Konfigurasi Firebase anda untuk fungsi online (GitHub).");
             }
         } catch (error) {
-            console.warn("Firebase tidak tersedia. Menggunakan mod luar talian/demo.", error);
-            updateSyncStatus("Mod Demo Luar Talian", true);
-            fallbackToLocalData();
+            console.error("Pangkalan Data Tidak Tersedia:", error);
+            updateSyncStatus("Ralat: Menunggu Konfigurasi Firebase", true);
         }
 
         const getDbPath = (collectionName) => `artifacts/${appId}/public/data/${collectionName}`;
@@ -233,54 +248,24 @@
                     }
                 }, (error) => {
                     console.error(`Error listening to ${collName}:`, error);
-                    updateSyncStatus("Ralat Sinkronisasi", true);
+                    updateSyncStatus("Ralat Sinkronisasi Pangkalan Data", true);
                 });
             });
         }
 
-        function fallbackToLocalData() {
-            // Data permulaan jika tiada pangkalan data (Demo)
-            window.appState.data = {
-                classes: [{id:'1', name:'1 Amanah'}, {id:'2', name:'2 Bestari'}, {id:'3', name:'6 Cemerlang'}],
-                equipment: [
-                    {id:'eq1', roomId:'Makmal Komputer', name:'Komputer Riba (Acer)', type:'ICT', quantity:20, regNo:'SKAI/MK/01'},
-                    {id:'eq2', roomId:'Makmal Sains', name:'Mikroskop', type:'Alat Sains', quantity:5, regNo:'SKAI/MS/01'}
-                ],
-                bookings: [],
-                borrowings: [],
-                teachers: [{id:'t1', name:'Cikgu Ahmad bin Abu'}, {id:'t2', name:'Ustazah Fatimah'}]
-            };
-            window.appState.dbReady = true;
-            renderApp();
-        }
-
-        // Global DB Operations
+        // Global DB Operations (Hanya menggunakan Cloud Firestore)
         window.dbOp = {
             add: async (collectionName, data) => {
-                if (db) {
-                    await addDoc(collection(db, getDbPath(collectionName)), { ...data, createdAt: new Date().toISOString() });
-                } else {
-                    const id = 'id_' + Math.random().toString(36).substr(2, 9);
-                    window.appState.data[collectionName].push({ id, ...data });
-                    renderApp();
-                }
+                if (!db) throw new Error("Pangkalan data belum dikonfigurasi. Sila semak setting Firebase.");
+                await addDoc(collection(db, getDbPath(collectionName)), { ...data, createdAt: new Date().toISOString() });
             },
             update: async (collectionName, id, data) => {
-                if (db) {
-                    await updateDoc(doc(db, getDbPath(collectionName), id), data);
-                } else {
-                    const idx = window.appState.data[collectionName].findIndex(d => d.id === id);
-                    if(idx > -1) window.appState.data[collectionName][idx] = { ...window.appState.data[collectionName][idx], ...data };
-                    renderApp();
-                }
+                if (!db) throw new Error("Pangkalan data belum dikonfigurasi.");
+                await updateDoc(doc(db, getDbPath(collectionName), id), data);
             },
             delete: async (collectionName, id) => {
-                if (db) {
-                    await deleteDoc(doc(db, getDbPath(collectionName), id));
-                } else {
-                    window.appState.data[collectionName] = window.appState.data[collectionName].filter(d => d.id !== id);
-                    renderApp();
-                }
+                if (!db) throw new Error("Pangkalan data belum dikonfigurasi.");
+                await deleteDoc(doc(db, getDbPath(collectionName), id));
             }
         };
 
