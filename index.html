@@ -214,21 +214,49 @@
         // --- Firebase Setup ---
         async function initFirebase() {
             try {
-                // Ensure a safe fallback for the config object to prevent missing property errors
+                // ==========================================
+                // LETAKKAN CONFIG FIREBASE ANDA DI SINI 
+                // JIKA ANDA BUKA FAIL INI SECARA OFFLINE/HOSTING SENDIRI
+                // ==========================================
+                const MY_FIREBASE_CONFIG = {
+                    apiKey: "API_KEY_ANDA",
+                    authDomain: "DOMAIN_ANDA",
+                    projectId: "PROJECT_ID_ANDA",
+                    storageBucket: "",
+                    messagingSenderId: "",
+                    appId: ""
+                };
+
                 let firebaseConfig = {};
+                
+                // 1. Cuba dapatkan config automatik dari persekitaran server
                 if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     try {
                         firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
-                    } catch (e) { console.warn("Failed to parse __firebase_config", e); }
+                    } catch (e) { console.warn("Gagal parse __firebase_config", e); }
                 }
                 
-                // Provide dummy properties if actual config is somehow empty in this environment
-                if (!firebaseConfig.projectId) {
-                    firebaseConfig = {
-                        apiKey: "dummy-api-key",
-                        projectId: "dummy-project-id",
-                        appId: "dummy-app-id"
-                    };
+                // 2. Jika tiada config dari server (bermakna fail dibuka secara local/offline)
+                if (!firebaseConfig.projectId || firebaseConfig.projectId === "dummy-project-id") {
+                    
+                    // Semak jika pengguna belum menukar API_KEY_ANDA
+                    if (MY_FIREBASE_CONFIG.apiKey === "API_KEY_ANDA") {
+                        document.getElementById('loadingOverlay').innerHTML = `
+                            <div class="bg-red-50 p-6 rounded-xl border border-red-200 text-center max-w-md mx-4 shadow-lg">
+                                <i class="fas fa-database text-4xl text-red-500 mb-4"></i>
+                                <h3 class="text-xl font-bold text-red-800 mb-2">Pangkalan Data Diperlukan</h3>
+                                <p class="text-sm text-red-600 mb-4">Sistem mengesan anda sedang membuka fail ini di luar pelayan. Pangkalan data <b>Firebase</b> diperlukan untuk memuatkan senarai tempahan dan peralatan.</p>
+                                <div class="text-xs text-slate-700 text-left bg-white p-3 rounded border font-mono mb-2 overflow-x-auto">
+                                    1. Buka fail index.html menggunakan Notepad/Editor.<br>
+                                    2. Cari teks <b>MY_FIREBASE_CONFIG</b>.<br>
+                                    3. Gantikan nilai di dalamnya dengan butiran Firebase Project anda.
+                                </div>
+                            </div>`;
+                        return; // Hentikan proses jika tiada database
+                    }
+                    
+                    // Jika pengguna dah isi, guna config tersebut
+                    firebaseConfig = MY_FIREBASE_CONFIG;
                 }
 
                 const app = window.initializeApp(firebaseConfig);
@@ -247,7 +275,7 @@
             } catch (error) {
                 console.error("Firebase init error:", error);
                 showToast("Ralat sistem: " + error.message, 'error');
-                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500">Ralat menyambung ke pangkalan data.</p>`;
+                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500 font-medium">Ralat: ${error.message}</p>`;
             }
         }
 
