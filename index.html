@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengurusan Bilik Khas SKAI</title>
+    
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables exposed for app logic
+        window.initializeApp = initializeApp;
+        window.getAuth = getAuth;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.getFirestore = getFirestore;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.getDocs = getDocs;
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        tech: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            primary: '#3b82f6', // Blue
+                            accent: '#06b6d4', // Cyan
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .sidebar-link { transition: all 0.2s ease; }
+        .sidebar-link:hover, .sidebar-link.active { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border-left: 4px solid #3b82f6; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        
+        /* Status Colors */
+        .status-upcoming { border-left: 4px solid #3b82f6; } /* Blue */
+        .status-ongoing { border-left: 4px solid #22c55e; } /* Green */
+        .status-ended { border-left: 4px solid #ef4444; } /* Red */
+
+        /* Toast Animation */
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast-enter { animation: slideInUp 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl z-20 flex flex-col h-full flex-shrink-0 transition-transform duration-300 md:translate-x-0 absolute md:relative -translate-x-full" id="sidebar">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold text-tech-900 tracking-tight">SK Anak Ikan</h1>
+                <p class="text-xs text-slate-500 uppercase font-semibold mt-1">Sistem Bilik Khas</p>
+            </div>
+            <button id="closeSidebarBtn" class="md:hidden text-slate-500 hover:text-slate-800">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="flex-1 py-4 overflow-y-auto" id="navMenu">
+            <!-- Navigation items injected by JS -->
+        </nav>
+
+        <div class="p-4 border-t border-slate-100">
+            <div id="adminStatusIndicator" class="text-xs font-medium text-slate-500 flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-slate-300"></div> Mod Pengguna
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Topbar for mobile -->
+        <header class="md:hidden bg-white shadow-sm p-4 flex items-center z-10">
+            <button id="openSidebarBtn" class="text-slate-600 mr-4 focus:outline-none">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <h2 class="font-semibold text-lg truncate" id="mobileHeaderTitle">Sistem Pengurusan</h2>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 relative" id="mainContent">
+            <!-- Loading Spinner -->
+            <div id="loadingOverlay" class="absolute inset-0 bg-slate-50 z-50 flex flex-col items-center justify-center">
+                <i class="fas fa-circle-notch fa-spin text-4xl text-tech-primary mb-4"></i>
+                <p class="text-slate-600 font-medium">Memuatkan sistem...</p>
+            </div>
+            
+            <div id="viewContainer" class="max-w-6xl mx-auto hidden opacity-0 transition-opacity duration-300">
+                <!-- Views injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Global Scripts -->
+    <script type="module">
+        // --- Constants & Config ---
+        const APPS_SCRIPT_URL = ''; // https://script.google.com/macros/s/AKfycbxZQGTJB5gkto3PBrt0vRUAytZmFfW5_5YYIv_pKb_vmk6MZn_FU9knG5yZog1VUTJy7Q/exec
+        
+        async function syncToGoogleSheets(action, payload) {
+            if (!APPS_SCRIPT_URL) return; // Abaikan jika URL tiada/belum diisi
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Penting: Mengelakkan sekatan keselamatan pelayar (CORS)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, payload })
+                });
+                console.log("Data dihantar secara background ke Google Sheets:", action);
+            } catch (err) {
+                console.error("Ralat sambungan ke Google Sheets:", err);
+            }
+        }
+
+        const ROOMS = ['Makmal Komputer', 'Pusat Sumber Sekolah', 'Makmal Sains', 'Bilik RBT', 'Bilik Muzik'];
+        const DAYS = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis'];
+        const TIME_SLOTS = [
+            { id: '0745', label: '07:45 am', val: 7.75 }, { id: '0815', label: '08:15 am', val: 8.25 },
+            { id: '0845', label: '08:45 am', val: 8.75 }, { id: '0915', label: '09:15 am', val: 9.25 },
+            { id: '0945', label: '09:45 am', val: 9.75 }, { id: '1015', label: '10:15 am', val: 10.25 },
+            { id: '1045', label: '10:45 am', val: 10.75 }, { id: '1115', label: '11:15 am', val: 11.25 },
+            { id: '1145', label: '11:45 am', val: 11.75 }, { id: '1215', label: '12:15 am', val: 12.25 },
+            { id: '1245', label: '12:45 pm', val: 12.75 }, { id: '1315', label: '01:15 pm', val: 13.25 } // End time
+        ];
+        const ADMIN_PWD = 'SkaiTba0078#';
+        
+        const MENU_ITEMS = [
+            { id: 'jadual', label: 'Jadual Waktu', icon: 'fa-calendar-alt' },
+            { id: 'tempahan', label: 'Tempahan Bilik Khas', icon: 'fa-calendar-check' },
+            { id: 'pinjaman', label: 'Pinjaman Peralatan', icon: 'fa-handshake' },
+            { id: 'peralatan', label: 'Senarai Peralatan', icon: 'fa-boxes' },
+            { id: 'admin', label: 'Admin', icon: 'fa-cog' }
+        ];
+
+        // --- Global State ---
+        let state = {
+            currentView: 'jadual',
+            isAdmin: false,
+            classes: [], // ['1 Arif', '2 Bestari', ...]
+            equipment: [], // { id, room, name, type, qty, regNo }
+            bookings: [], // { id, name, date, startIdx, endIdx, class, room, purpose, eqIds, timestamp }
+            borrowings: [], // { id, name, room, eqIds, startDate, returnDate, status, timestamp }
+            timetables: [], // NEW: { id, room, day, startIdx, endIdx, className }
+            db: null,
+            userId: null,
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'skai-rooms-v1'
+        };
+
+        // --- Utility Functions ---
+        const showToast = (message, type = 'info') => {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-50 text-green-800 border-green-200',
+                error: 'bg-red-50 text-red-800 border-red-200',
+                info: 'bg-blue-50 text-blue-800 border-blue-200'
+            };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            
+            toast.className = `toast-enter flex items-center p-4 mb-2 text-sm rounded-lg border shadow-sm ${colors[type]}`;
+            toast.innerHTML = `<i class="fas ${icons[type]} mr-2 text-lg"></i> <span class="font-medium">${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        const generateId = () => Math.random().toString(36).substring(2, 9);
+        const getTodayStr = () => new Date().toISOString().split('T')[0];
+
+        // --- Firebase Setup ---
+        async function initFirebase() {
+            try {
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const app = window.initializeApp(firebaseConfig);
+                state.db = window.getFirestore(app);
+                const auth = window.getAuth(app);
+
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) {
+                    await window.signInWithCustomToken(auth, token);
+                } else {
+                    await window.signInAnonymously(auth);
+                }
+                
+                state.userId = auth.currentUser.uid;
+                setupDataListeners();
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                showToast("Ralat sistem: " + error.message, 'error');
+                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500">Ralat menyambung ke pangkalan data.</p>`;
+            }
+        }
+
+        function getColRef(colName) {
+            return window.collection(state.db, 'artifacts', state.appId, 'public', 'data', colName);
+        }
+
+        function setupDataListeners() {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+                loadedCount++;
+                if (loadedCount === 5) {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    const vc = document.getElementById('viewContainer');
+                    vc.classList.remove('hidden');
+                    // short delay to allow transition
+                    setTimeout(() => vc.classList.remove('opacity-0'), 50);
+                    renderApp();
+                }
+            };
+
+            // Listen Classes
+            window.onSnapshot(window.query(getColRef('classes')), (snapshot) => {
+                state.classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => a.name.localeCompare(b.name));
+                if(loadedCount < 5) checkLoaded(); else renderApp();
+            }, (e) => console.error(e));
+
+            // Listen Equipment
+            window.onSnapshot(window.query(getColRef('equipment')), (snapshot) => {
+                state.equipment = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if(loadedCount < 5) checkLoaded(); else renderApp();
+            }, (e) => console.error(e));
+
+            // Listen Bookings
+            window.onSnapshot(window.query(getColRef('bookings')), (snapshot) => {
+                state.bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if(loadedCount < 5) checkLoaded(); else renderApp();
+            }, (e) => console.error(e));
+
+            // Listen Borrowings
+            window.onSnapshot(window.query(getColRef('borrowings')), (snapshot) => {
+                state.borrowings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if(loadedCount < 5) checkLoaded(); else renderApp();
+            }, (e) => console.error(e));
+
+            // Listen Timetables
+            window.onSnapshot(window.query(getColRef('timetables')), (snapshot) => {
+                state.timetables = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if(loadedCount < 5) checkLoaded(); else renderApp();
+            }, (e) => console.error(e));
+        }
+
+        // --- UI Rendering Core ---
+        function renderApp() {
+            renderSidebar();
+            renderCurrentView();
+            updateAdminIndicator();
+        }
+        window.renderApp = renderApp;
+
+        function renderSidebar() {
+            const nav = document.getElementById('navMenu');
+            nav.innerHTML = MENU_ITEMS.map(item => `
+                <a href="#" data-view="${item.id}" class="sidebar-link flex items-center px-6 py-3 text-sm font-medium text-slate-600 ${state.currentView === item.id ? 'active' : ''}">
+                    <i class="fas ${item.icon} w-6 text-center mr-3"></i>
+                    ${item.label}
+                </a>
+            `).join('');
+
+            // Mobile logic
+            document.getElementById('mobileHeaderTitle').innerText = MENU_ITEMS.find(i => i.id === state.currentView)?.label || '';
+
+            // Attach events
+            nav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    state.currentView = link.dataset.view;
+                    if(window.innerWidth < 768) toggleSidebar(); // close on mobile
+                    renderApp();
+                });
+            });
+        }
+
+        function updateAdminIndicator() {
+            const ind = document.getElementById('adminStatusIndicator');
+            if (state.isAdmin) {
+                ind.innerHTML = `<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#22c55e]"></div> Mod Admin Aktif`;
+                ind.classList.add('text-tech-900', 'font-bold');
+            } else {
+                ind.innerHTML = `<div class="w-2 h-2 rounded-full bg-slate-300"></div> Mod Pengguna`;
+                ind.classList.remove('text-tech-900', 'font-bold');
+            }
+        }
+
+        function renderCurrentView() {
+            const container = document.getElementById('viewContainer');
+            container.innerHTML = ''; // Clear
+
+            switch (state.currentView) {
+                case 'jadual': container.innerHTML = viewJadual(); break;
+                case 'tempahan': container.innerHTML = viewTempahan(); initTempahanEvents(); break;
+                case 'pinjaman': container.innerHTML = viewPinjaman(); initPinjamanEvents(); break;
+                case 'peralatan': container.innerHTML = viewPeralatan(); break;
+                case 'admin': container.innerHTML = viewAdmin(); initAdminEvents(); break;
+            }
+            
+            // Refresh view every minute to update status colors for bookings
+            if(state.currentView === 'tempahan') {
+                clearInterval(window.refreshTimer);
+                window.refreshTimer = setInterval(() => { if(state.currentView === 'tempahan') renderCurrentView(); }, 60000);
+            }
+        }
+
+        // --- View: Jadual Waktu ---
+        function viewJadual() {
+            // State for selected options within view
+            window.jadualState = window.jadualState || { room: ROOMS[0], day: getDayName(new Date()) };
+            
+            // Ensure default day is valid (Sun-Thu)
+            if(!DAYS.includes(window.jadualState.day)) window.jadualState.day = 'Ahad';
+
+            let html = `
+                <div class="glass-panel p-6 rounded-2xl mb-6">
+                    <h2 class="text-2xl font-bold text-tech-900 mb-6 border-b pb-2">Jadual Penggunaan Bilik Khas</h2>
+                    
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Bilik</label>
+                            <select id="jadualRoomSelect" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-tech-primary focus:ring focus:ring-tech-primary/20 p-2.5 bg-white border outline-none" onchange="window.jadualState.room = this.value; renderApp();">
+                                ${ROOMS.map(r => `<option value="${r}" ${window.jadualState.room === r ? 'selected' : ''}>${r}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Hari</label>
+                            <select id="jadualDaySelect" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-tech-primary focus:ring focus:ring-tech-primary/20 p-2.5 bg-white border outline-none" onchange="window.jadualState.day = this.value; renderApp();">
+                                ${DAYS.map(d => `<option value="${d}" ${window.jadualState.day === d ? 'selected' : ''}>${d}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+            `;
+
+            // Filter bookings for specific room and day (naive approach: assuming booking dates match the day selected)
+            // A better timetable shows a typical week, not specific dates.
+            // Let's create a generic grid. Since bookings are specific dates, we need to show today's week or next.
+            // Let's simplify: Show today's date if it matches the day, or just filter bookings by day of week.
+            
+            html += `<div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm"><table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-600"><tr>`;
+            html += `<th class="px-4 py-3 border-b text-center min-w-[100px]">Waktu</th>`;
+            html += `<th class="px-4 py-3 border-b w-full">Maklumat Penggunaan</th>`;
+            html += `</tr></thead><tbody class="divide-y divide-slate-100 bg-white">`;
+
+            // Filter active timetables for the selected room and day of week
+            const relevantBookings = state.timetables.filter(b => {
+                return b.room === window.jadualState.room && b.day === window.jadualState.day;
+            });
+
+            for(let i=0; i < TIME_SLOTS.length - 1; i++) {
+                const startSlot = TIME_SLOTS[i];
+                const endSlot = TIME_SLOTS[i+1];
+                
+                // Find booking in this slot
+                const bookingInSlot = relevantBookings.find(b => {
+                    const sIdx = TIME_SLOTS.findIndex(t => t.id === b.startIdx);
+                    const eIdx = TIME_SLOTS.findIndex(t => t.id === b.endIdx);
+                    return i >= sIdx && i < eIdx;
+                });
+
+                html += `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 font-medium text-slate-900 border-r text-center bg-slate-50/50">
+                        ${startSlot.label} <br><span class="text-xs text-slate-400">hingga</span><br> ${endSlot.label}
+                    </td>
+                    <td class="px-4 py-3">`;
+                
+                if (bookingInSlot) {
+                    html += `
+                        <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3">
+                            <div class="font-bold text-tech-900 text-base mb-1">${bookingInSlot.className}</div>
+                            <div class="flex flex-col sm:flex-row sm:gap-4 text-xs text-slate-600">
+                                <div><i class="fas fa-calendar-alt text-indigo-400 w-4 mr-1"></i> Jadual Waktu Tetap</div>
+                            </div>
+                        </div>`;
+                } else {
+                    html += `<span class="text-slate-400 italic">Kosong (Boleh ditempah)</span>`;
+                }
+                
+                html += `</td></tr>`;
+            }
+
+            html += `</tbody></table></div></div>`;
+            return html;
+        }
+
+        function getDayName(dateObj) {
+            const d = dateObj.getDay();
+            const map = {0:'Ahad', 1:'Isnin', 2:'Selasa', 3:'Rabu', 4:'Khamis', 5:'Jumaat', 6:'Sabtu'};
+            return map[d];
+        }
+
+        // --- View: Tempahan ---
+        function viewTempahan() {
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Form Column -->
+                    <div class="lg:col-span-1">
+                        <div class="glass-panel p-6 rounded-2xl sticky top-6">
+                            <h3 class="text-lg font-bold text-tech-900 mb-4 flex items-center"><i class="fas fa-plus-circle mr-2 text-tech-primary"></i> Buat Tempahan Baru</h3>
+                            <form id="bookingForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Nama Penuh (Guru)</label>
+                                    <input type="text" id="bkName" required class="w-full rounded-lg border-slate-300 shadow-sm focus:border-tech-primary focus:ring focus:ring-tech-primary/20 p-2.5 border outline-none bg-white">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Bilik Khas</label>
+                                        <select id="bkRoom" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white">
+                                            <option value="">Pilih...</option>
+                                            ${ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Kelas</label>
+                                        <select id="bkClass" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white">
+                                            <option value="">Pilih...</option>
+                                            ${state.classes.map(c => `<option value="${c.name}">${c.name} (${c.studentCount || 0} Murid)</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tarikh</label>
+                                    <input type="date" id="bkDate" min="${getTodayStr()}" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Mula</label>
+                                        <select id="bkStart" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white text-sm">
+                                            ${TIME_SLOTS.slice(0, -1).map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Tamat</label>
+                                        <select id="bkEnd" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white text-sm">
+                                            ${TIME_SLOTS.slice(1).map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tujuan</label>
+                                    <input type="text" id="bkPurpose" required placeholder="Cth: Amali Sains" class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border outline-none bg-white">
+                                </div>
+                                
+                                <div id="eqSelectionArea" class="hidden">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Keperluan Peralatan</label>
+                                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto" id="eqCheckboxes">
+                                        <!-- populated by JS based on room -->
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full bg-tech-primary hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-md">
+                                    Sahkan Tempahan
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- List Column -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-xl font-bold text-tech-900">Senarai Tempahan</h3>
+                            <div class="flex gap-2 text-xs font-medium">
+                                <span class="flex items-center"><div class="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>Akan Datang</span>
+                                <span class="flex items-center"><div class="w-3 h-3 bg-green-500 rounded-full mr-1"></div>Sedang Berlangsung</span>
+                                <span class="flex items-center"><div class="w-3 h-3 bg-red-500 rounded-full mr-1"></div>Telah Tamat</span>
+                            </div>
+                        </div>
+                        
+                        <div id="bookingList" class="space-y-3">
+                            ${generateBookingListHtml()}
+                        </div>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        function getBookingStatus(b) {
+            const now = new Date();
+            const bDateStr = b.date; // YYYY-MM-DD
+            
+            // Reconstruct exact start and end dates based on slots
+            const startSlotObj = TIME_SLOTS.find(t => t.id === b.startIdx);
+            const endSlotObj = TIME_SLOTS.find(t => t.id === b.endIdx);
+            
+            if(!startSlotObj || !endSlotObj) return 'unknown';
+
+            // Convert val (e.g. 7.75) to hours and minutes
+            const startH = Math.floor(startSlotObj.val);
+            const startM = (startSlotObj.val % 1) * 60;
+            const endH = Math.floor(endSlotObj.val);
+            const endM = (endSlotObj.val % 1) * 60;
+
+            const startDT = new Date(`${bDateStr}T${startH.toString().padStart(2,'0')}:${startM.toString().padStart(2,'0')}:00`);
+            const endDT = new Date(`${bDateStr}T${endH.toString().padStart(2,'0')}:${endM.toString().padStart(2,'0')}:00`);
+
+            if (now < startDT) return 'upcoming';
+            if (now >= startDT && now <= endDT) return 'ongoing';
+            return 'ended';
+        }
+
+        function generateBookingListHtml() {
+            // Sort by date then time desc
+            const sorted = [...state.bookings].sort((a,b) => {
+                if(a.date !== b.date) return a.date > b.date ? -1 : 1;
+                return a.startIdx > b.startIdx ? -1 : 1;
+            });
+
+            if(sorted.length === 0) return `<div class="p-8 text-center text-slate-500 glass-panel rounded-2xl">Tiada tempahan direkodkan.</div>`;
+
+            return sorted.map(b => {
+                const status = getBookingStatus(b);
+                const sLabel = TIME_SLOTS.find(t=>t.id===b.startIdx)?.label;
+                const eLabel = TIME_SLOTS.find(t=>t.id===b.endIdx)?.label;
+                
+                // Used equipment names
+                const eqNames = b.eqIds && b.eqIds.length > 0 
+                    ? state.equipment.filter(e => b.eqIds.includes(e.id)).map(e => e.name).join(', ')
+                    : 'Tiada';
+
+                return `
+                <div class="glass-panel p-4 rounded-xl status-${status} relative group overflow-hidden">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="inline-block px-2 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded mb-1">${b.room}</span>
+                            <h4 class="font-bold text-lg text-slate-800">${b.class} <span class="text-sm font-normal text-slate-500 text-nowrap">(${b.studentCount || 0} murid)</span> - ${b.purpose}</h4>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-tech-900">${b.date}</div>
+                            <div class="text-xs font-medium text-slate-500">${sLabel} - ${eLabel}</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-slate-600 mt-2 border-t pt-2 border-slate-100">
+                        <div><i class="fas fa-chalkboard-teacher w-4 text-center mr-1 text-slate-400"></i> ${b.name}</div>
+                        <div class="truncate" title="${eqNames}"><i class="fas fa-toolbox w-4 text-center mr-1 text-slate-400"></i> ${eqNames}</div>
+                    </div>
+                    ${state.isAdmin ? `<button onclick="deleteBooking('${b.id}')" class="absolute top-2 right-2 bg-red-100 text-red-600 w-8 h-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"><i class="fas fa-trash"></i></button>` : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        function initTempahanEvents() {
+            const form = document.getElementById('bookingForm');
+            const roomSelect = document.getElementById('bkRoom');
+            const eqArea = document.getElementById('eqSelectionArea');
+            const eqBox = document.getElementById('eqCheckboxes');
+
+            roomSelect.addEventListener('change', (e) => {
+                const room = e.target.value;
+                const roomEq = state.equipment.filter(eq => eq.room === room);
+                if(roomEq.length > 0) {
+                    eqArea.classList.remove('hidden');
+                    eqBox.innerHTML = roomEq.map(eq => `
+                        <label class="flex items-center space-x-2 py-1">
+                            <input type="checkbox" name="bEq" value="${eq.id}" class="rounded text-tech-primary focus:ring-tech-primary/50">
+                            <span class="text-sm text-slate-700">${eq.name} (Ada: ${eq.qty})</span>
+                        </label>
+                    `).join('');
+                } else {
+                    eqArea.classList.add('hidden');
+                    eqBox.innerHTML = '';
+                }
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const className = document.getElementById('bkClass').value;
+                const classObj = state.classes.find(c => c.name === className);
+                const studentCount = classObj ? (classObj.studentCount || 0) : 0;
+
+                const data = {
+                    name: document.getElementById('bkName').value.trim(),
+                    room: document.getElementById('bkRoom').value,
+                    class: className,
+                    studentCount: studentCount,
+                    date: document.getElementById('bkDate').value,
+                    startIdx: document.getElementById('bkStart').value,
+                    endIdx: document.getElementById('bkEnd').value,
+                    purpose: document.getElementById('bkPurpose').value.trim(),
+                    eqIds: Array.from(document.querySelectorAll('input[name="bEq"]:checked')).map(cb => cb.value),
+                    timestamp: new Date().toISOString()
+                };
+
+                // Validations
+                const sIdxVal = TIME_SLOTS.findIndex(t => t.id === data.startIdx);
+                const eIdxVal = TIME_SLOTS.findIndex(t => t.id === data.endIdx);
+                
+                if (sIdxVal >= eIdxVal) {
+                    showToast("Masa tamat mesti selepas masa mula.", 'error');
+                    return;
+                }
+
+                // Get Day of week for the booking date
+                const bDateObj = new Date(data.date);
+                const bDayName = getDayName(bDateObj);
+
+                // Overlap check with existing ad-hoc Bookings
+                const isOverlap = state.bookings.some(b => {
+                    if (b.room !== data.room || b.date !== data.date) return false;
+                    const bSVal = TIME_SLOTS.findIndex(t => t.id === b.startIdx);
+                    const bEVal = TIME_SLOTS.findIndex(t => t.id === b.endIdx);
+                    
+                    // Logic: New start < Existing End AND New End > Existing Start
+                    return (sIdxVal < bEVal && eIdxVal > bSVal);
+                });
+
+                if (isOverlap) {
+                    showToast("Maaf, bilik ini telah ditempah pada tarikh dan masa tersebut.", 'error');
+                    return;
+                }
+
+                // Overlap check with Timetable (Jadual Tetap)
+                const isTimetableOverlap = state.timetables.some(t => {
+                    if (t.room !== data.room || t.day !== bDayName) return false;
+                    const tSVal = TIME_SLOTS.findIndex(x => x.id === t.startIdx);
+                    const tEVal = TIME_SLOTS.findIndex(x => x.id === t.endIdx);
+                    
+                    return (sIdxVal < tEVal && eIdxVal > tSVal);
+                });
+
+                if (isTimetableOverlap) {
+                    showToast("Maaf, slot masa ini telah dikhaskan untuk Jadual Waktu Tetap kelas.", 'error');
+                    return;
+                }
+
+                // Checks passed, save to DB
+                try {
+                    const btn = form.querySelector('button');
+                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                    
+                    await window.addDoc(getColRef('bookings'), data);
+                    await syncToGoogleSheets('addBooking', data); // HANTAR DATA KE GOOGLE SHEETS
+                    
+                    showToast("Tempahan berjaya direkodkan!", 'success');
+                    form.reset();
+                    eqArea.classList.add('hidden');
+                } catch (err) {
+                    showToast("Ralat menyimpan: " + err.message, 'error');
+                } finally {
+                    const btn = form.querySelector('button');
+                    btn.disabled = false; btn.innerText = 'Sahkan Tempahan';
+                }
+            });
+        }
+
+        window.deleteBooking = async (id) => {
+            if(confirm("Padam tempahan ini?")) {
+                try {
+                    await window.deleteDoc(window.doc(state.db, 'artifacts', state.appId, 'public', 'data', 'bookings', id));
+                    showToast("Tempahan dipadam.", 'success');
+                } catch (e) { showToast("Ralat: " + e.message, 'error'); }
+            }
+        }
+
+
+        // --- View: Pinjaman Peralatan ---
+        function viewPinjaman() {
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl h-fit">
+                        <h3 class="text-lg font-bold text-tech-900 mb-4 border-b pb-2">Borang Pinjaman Peralatan</h3>
+                        <form id="borrowForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Nama Peminjam</label>
+                                <input type="text" id="bwName" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border bg-white outline-none focus:border-tech-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Bilik</label>
+                                <select id="bwRoom" required class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border bg-white outline-none">
+                                    <option value="">Pilih...</option>
+                                    ${ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div id="bwEqArea" class="hidden">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Pilih Peralatan</label>
+                                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto" id="bwEqList">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tarikh Ambil</label>
+                                    <input type="date" id="bwStart" required min="${getTodayStr()}" class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border bg-white outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Jangka Pulang</label>
+                                    <input type="date" id="bwEnd" required min="${getTodayStr()}" class="w-full rounded-lg border-slate-300 shadow-sm p-2.5 border bg-white outline-none">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-tech-primary hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                                Rekod Pinjaman
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-tech-900 mb-2">Senarai Peminjam Aktif</h3>
+                        <div id="borrowList" class="space-y-3">
+                            ${generateBorrowingListHtml()}
+                        </div>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        function generateBorrowingListHtml() {
+            // Show only active loans or recently returned
+            const active = state.borrowings.filter(b => b.status === 'borrowed').sort((a,b) => a.startDate > b.startDate ? -1 : 1);
+            
+            if(active.length === 0) return `<div class="p-6 text-center text-slate-500 glass-panel rounded-xl">Tiada rekod pinjaman aktif.</div>`;
+
+            return active.map(b => {
+                const isOverdue = new Date(b.returnDate) < new Date(getTodayStr());
+                const eqNames = b.eqIds.map(id => state.equipment.find(e=>e.id === id)?.name || 'Unknown').join(', ');
+
+                return `
+                <div class="glass-panel p-4 rounded-xl border-l-4 ${isOverdue ? 'border-red-500 bg-red-50/50' : 'border-orange-400'}">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-slate-800 ${isOverdue ? 'text-red-700' : ''}">${b.name}</h4>
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-slate-200 text-slate-700">${b.room}</span>
+                    </div>
+                    <p class="text-sm text-slate-700 mb-3"><i class="fas fa-boxes mr-1 text-slate-400"></i> ${eqNames}</p>
+                    <div class="flex justify-between items-center text-xs">
+                        <div class="text-slate-500">
+                            <div>Ambil: <span class="font-medium text-slate-700">${b.startDate}</span></div>
+                            <div class="${isOverdue ? 'text-red-600 font-bold' : ''}">Pulang: <span class="font-medium">${b.returnDate}</span></div>
+                        </div>
+                        ${state.isAdmin ? `
+                            <button onclick="markReturned('${b.id}')" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded font-medium transition-colors">
+                                <i class="fas fa-check mr-1"></i> Sah Pulang
+                            </button>
+                        ` : '<span class="text-orange-600 font-semibold text-[10px] uppercase tracking-wider bg-orange-100 px-2 py-1 rounded-full">Sedang Pinjam</span>'}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function initPinjamanEvents() {
+            const roomSel = document.getElementById('bwRoom');
+            const eqArea = document.getElementById('bwEqArea');
+            const eqList = document.getElementById('bwEqList');
+            const form = document.getElementById('borrowForm');
+
+            roomSel.addEventListener('change', (e) => {
+                const room = e.target.value;
+                const eq = state.equipment.filter(el => el.room === room);
+                if(eq.length > 0) {
+                    eqArea.classList.remove('hidden');
+                    eqList.innerHTML = eq.map(el => `
+                        <label class="flex items-start space-x-2 py-1.5 border-b border-slate-100 last:border-0 cursor-pointer">
+                            <input type="checkbox" name="bwEq" value="${el.id}" class="mt-1 rounded text-tech-primary focus:ring-tech-primary/50">
+                            <div>
+                                <div class="text-sm font-medium text-slate-800">${el.name}</div>
+                                <div class="text-xs text-slate-500">ID: ${el.regNo || '-'} | Bil: ${el.qty}</div>
+                            </div>
+                        </label>
+                    `).join('');
+                } else {
+                    eqArea.classList.add('hidden');
+                    eqList.innerHTML = '';
+                }
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const selEq = Array.from(document.querySelectorAll('input[name="bwEq"]:checked')).map(cb => cb.value);
+                
+                if(selEq.length === 0) {
+                    showToast("Sila pilih sekurang-kurangnya satu peralatan.", 'error'); return;
+                }
+
+                const data = {
+                    name: document.getElementById('bwName').value.trim(),
+                    room: document.getElementById('bwRoom').value,
+                    startDate: document.getElementById('bwStart').value,
+                    returnDate: document.getElementById('bwEnd').value,
+                    eqIds: selEq,
+                    status: 'borrowed',
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    const btn = form.querySelector('button'); btn.disabled = true;
+                    
+                    await window.addDoc(getColRef('borrowings'), data);
+                    await syncToGoogleSheets('addBorrowing', data); // HANTAR DATA KE GOOGLE SHEETS
+                    
+                    showToast("Rekod pinjaman ditambah.", 'success');
+                    form.reset(); eqArea.classList.add('hidden');
+                } catch(err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    form.querySelector('button').disabled = false;
+                }
+            });
+        }
+
+        window.markReturned = async (id) => {
+            if(confirm("Sahkan peralatan ini telah dipulangkan dalam keadaan baik?")) {
+                try {
+                    await window.updateDoc(window.doc(state.db, 'artifacts', state.appId, 'public', 'data', 'borrowings', id), {
+                        status: 'returned',
+                        actualReturnDate: getTodayStr()
+                    });
+                    showToast("Disahkan pulang.", 'success');
+                } catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+
+        // --- View: Senarai Peralatan ---
+        function viewPeralatan() {
+            // Group equipment by room
+            const grouped = {};
+            ROOMS.forEach(r => grouped[r] = []);
+            state.equipment.forEach(eq => {
+                if(grouped[eq.room]) grouped[eq.room].push(eq);
+            });
+
+            let html = `<div class="space-y-8">`;
+            
+            ROOMS.forEach(room => {
+                const items = grouped[room];
+                html += `
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="text-xl font-bold text-tech-900 mb-4 border-l-4 border-tech-primary pl-3">${room}</h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-xs uppercase text-slate-600">
+                                <tr>
+                                    <th class="px-4 py-3">Nama Peralatan</th>
+                                    <th class="px-4 py-3">Jenis</th>
+                                    <th class="px-4 py-3 text-center">Bilangan</th>
+                                    <th class="px-4 py-3">No. Daftar</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${items.length > 0 ? items.map(eq => `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="px-4 py-3 font-medium text-slate-800">${eq.name}</td>
+                                        <td class="px-4 py-3 text-slate-600">${eq.type || '-'}</td>
+                                        <td class="px-4 py-3 text-center font-bold">${eq.qty}</td>
+                                        <td class="px-4 py-3 text-slate-500 font-mono text-xs">${eq.regNo || '-'}</td>
+                                    </tr>
+                                `).join('') : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 italic">Tiada rekod peralatan. (Admin perlu tambah data)</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                `;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+
+        // --- View: Admin ---
+        function viewAdmin() {
+            if (!state.isAdmin) {
+                return `
+                <div class="max-w-md mx-auto glass-panel p-8 rounded-2xl shadow-lg mt-10">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-lock text-2xl text-slate-500"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-tech-900">Akses Admin</h2>
+                        <p class="text-sm text-slate-500 mt-1">Sila masukkan kata laluan untuk mod pengurusan.</p>
+                    </div>
+                    <form id="adminLoginForm" class="space-y-4">
+                        <div>
+                            <input type="password" id="adminPwd" placeholder="Kata Laluan" class="w-full text-center tracking-widest rounded-lg border-slate-300 shadow-sm p-3 border outline-none focus:border-tech-primary bg-slate-50 focus:bg-white transition-colors" required>
+                        </div>
+                        <button type="submit" class="w-full bg-tech-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                            Log Masuk
+                        </button>
+                    </form>
+                </div>
+                `;
+            }
+
+            // Admin Dashboard
+            
+            // Calculate analysis
+            const analisa = {};
+            ROOMS.forEach(r => analisa[r] = { tempahan: 0, murid: 0 });
+            state.bookings.forEach(b => {
+                if(analisa[b.room]) {
+                    analisa[b.room].tempahan += 1;
+                    analisa[b.room].murid += (b.studentCount || 0);
+                }
+            });
+
+            return `
+            <div class="space-y-6">
+                <div class="flex justify-between items-center glass-panel px-6 py-4 rounded-xl border-l-4 border-green-500">
+                    <div>
+                        <h2 class="text-xl font-bold text-tech-900">Panel Pengurusan Admin</h2>
+                        <p class="text-sm text-slate-600">Pangkalan Data Masa Nyata Aktif</p>
+                    </div>
+                    <button id="logoutBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Keluar
+                    </button>
+                </div>
+
+                <!-- Analisa Penggunaan -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-chart-bar mr-2 text-purple-500"></i> Analisa Penggunaan Bilik Khas</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        ${ROOMS.map(r => `
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center shadow-sm">
+                                <div class="text-xs font-bold text-slate-500 mb-2 truncate" title="${r}">${r}</div>
+                                <div class="text-2xl font-bold text-tech-900">${analisa[r].tempahan} <span class="text-xs font-normal text-slate-500">Sesi</span></div>
+                                <div class="text-sm font-medium text-purple-600 mt-1">${analisa[r].murid} <span class="text-xs text-slate-500">Murid</span></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Pengurusan Jadual Waktu -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-calendar-alt mr-2 text-orange-500"></i> Tetapan Jadual Waktu (Tetap)</h3>
+                    <form id="addTimetableForm" class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
+                        <select id="ttRoom" required class="rounded border p-2 text-sm outline-none bg-white md:col-span-1">
+                            <option value="">Pilih Bilik...</option>
+                            ${ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                        </select>
+                        <select id="ttDay" required class="rounded border p-2 text-sm outline-none bg-white md:col-span-1">
+                            <option value="">Pilih Hari...</option>
+                            ${DAYS.map(d => `<option value="${d}">${d}</option>`).join('')}
+                        </select>
+                        <select id="ttStart" required class="rounded border p-2 text-sm outline-none bg-white md:col-span-1">
+                            <option value="">Mula...</option>
+                            ${TIME_SLOTS.slice(0, -1).map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+                        </select>
+                        <select id="ttEnd" required class="rounded border p-2 text-sm outline-none bg-white md:col-span-1">
+                            <option value="">Tamat...</option>
+                            ${TIME_SLOTS.slice(1).map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+                        </select>
+                        <select id="ttClass" required class="rounded border p-2 text-sm outline-none bg-white md:col-span-1">
+                            <option value="">Kelas...</option>
+                            ${state.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                        </select>
+                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white rounded p-2 text-sm font-semibold md:col-span-1 transition-colors">
+                            <i class="fas fa-plus mr-1"></i> Tambah
+                        </button>
+                    </form>
+                    <div class="max-h-64 overflow-y-auto border rounded-lg bg-white">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 sticky top-0 shadow-sm">
+                                <tr>
+                                    <th class="p-3">Bilik</th>
+                                    <th class="p-3">Hari</th>
+                                    <th class="p-3">Waktu</th>
+                                    <th class="p-3">Kelas</th>
+                                    <th class="p-3 text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${state.timetables.sort((a,b) => {
+                                    if(a.room !== b.room) return a.room.localeCompare(b.room);
+                                    const dA = DAYS.indexOf(a.day), dB = DAYS.indexOf(b.day);
+                                    if(dA !== dB) return dA - dB;
+                                    return a.startIdx > b.startIdx ? 1 : -1;
+                                }).map(t => `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-3 font-medium text-slate-800">${t.room}</td>
+                                        <td class="p-3 text-slate-600">${t.day}</td>
+                                        <td class="p-3 text-slate-600 font-medium">${TIME_SLOTS.find(ts=>ts.id===t.startIdx)?.label} - ${TIME_SLOTS.find(ts=>ts.id===t.endIdx)?.label}</td>
+                                        <td class="p-3 text-slate-800">${t.className}</td>
+                                        <td class="p-3 text-center">
+                                            <button onclick="deleteTimetable('${t.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Tiada jadual waktu ditetapkan setakat ini.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Manage Classes -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg mb-4"><i class="fas fa-users mr-2 text-blue-500"></i> Pengurusan Kelas</h3>
+                        <form id="addClassForm" class="flex gap-2 mb-4">
+                            <input type="text" id="newClassName" placeholder="Nama Kelas Baru" required class="flex-1 rounded-lg border-slate-300 p-2 border text-sm outline-none">
+                            <input type="number" id="newClassCount" placeholder="Bil. Murid" required min="1" class="w-24 rounded-lg border-slate-300 p-2 border text-sm outline-none">
+                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 shadow-sm"><i class="fas fa-plus"></i></button>
+                        </form>
+                        <div class="max-h-48 overflow-y-auto border rounded-lg bg-slate-50 p-2 space-y-1">
+                            ${state.classes.map(c => `
+                                <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100 text-sm">
+                                    <span><span class="font-medium">${c.name}</span> <span class="text-xs text-slate-500 ml-2 border-l pl-2">(${c.studentCount || 0} murid)</span></span>
+                                    <button onclick="deleteClass('${c.id}')" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-times"></i></button>
+                                </div>
+                            `).join('') || '<div class="p-2 text-xs text-center text-slate-400">Tiada kelas direkodkan</div>'}
+                        </div>
+                    </div>
+
+                    <!-- Add Equipment -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg mb-4"><i class="fas fa-box-open mr-2 text-green-500"></i> Tambah Peralatan</h3>
+                        <form id="addEqForm" class="space-y-3">
+                            <select id="eqRoom" required class="w-full rounded border p-2 text-sm outline-none bg-white">
+                                <option value="">Pilih Bilik...</option>
+                                ${ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                            </select>
+                            <input type="text" id="eqName" placeholder="Nama Peralatan" required class="w-full rounded border p-2 text-sm outline-none">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="eqQty" placeholder="Kuantiti" required min="1" class="w-full rounded border p-2 text-sm outline-none">
+                                <input type="text" id="eqRegNo" placeholder="No. Daftar (Pilihan)" class="w-full rounded border p-2 text-sm outline-none">
+                            </div>
+                            <input type="text" id="eqType" placeholder="Jenis (Cth: Elektrik, Perabot)" class="w-full rounded border p-2 text-sm outline-none">
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-semibold transition-colors">
+                                Simpan Peralatan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Delete Equipment Table -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="font-bold text-lg mb-4 text-red-600"><i class="fas fa-exclamation-triangle mr-2"></i> Padam Data Peralatan</h3>
+                    <div class="max-h-64 overflow-y-auto rounded-lg border">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 sticky top-0">
+                                <tr>
+                                    <th class="p-2">Bilik</th><th class="p-2">Nama</th><th class="p-2 w-16 text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${state.equipment.map(e => `
+                                    <tr>
+                                        <td class="p-2 text-xs text-slate-500">${e.room}</td>
+                                        <td class="p-2 font-medium">${e.name}</td>
+                                        <td class="p-2 text-center">
+                                            <button onclick="deleteEquipment('${e.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="3" class="p-4 text-center text-slate-400">Tiada data</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function initAdminEvents() {
+            if (!state.isAdmin) {
+                const form = document.getElementById('adminLoginForm');
+                if(form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const pwd = document.getElementById('adminPwd').value;
+                        if (pwd === ADMIN_PWD) {
+                            state.isAdmin = true;
+                            showToast("Log masuk berjaya.", 'success');
+                            renderApp();
+                        } else {
+                            showToast("Kata laluan salah.", 'error');
+                        }
+                    });
+                }
+                return;
+            }
+
+            // Logout
+            document.getElementById('logoutBtn')?.addEventListener('click', () => {
+                state.isAdmin = false;
+                renderApp();
+                showToast("Log keluar berjaya.");
+            });
+
+            // Add Class
+            document.getElementById('addClassForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newClassName').value.trim();
+                const studentCount = parseInt(document.getElementById('newClassCount').value) || 0;
+                if(name) {
+                    try {
+                        const data = { name, studentCount, timestamp: Date.now() };
+                        await window.addDoc(getColRef('classes'), data);
+                        await syncToGoogleSheets('addClass', data); // HANTAR DATA KE GOOGLE SHEETS
+                        
+                        showToast("Kelas ditambah.", 'success');
+                        document.getElementById('newClassName').value = '';
+                        document.getElementById('newClassCount').value = '';
+                    } catch(err) { showToast(err.message, 'error'); }
+                }
+            });
+
+            // Add Equipment
+            document.getElementById('addEqForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    room: document.getElementById('eqRoom').value,
+                    name: document.getElementById('eqName').value.trim(),
+                    qty: parseInt(document.getElementById('eqQty').value),
+                    regNo: document.getElementById('eqRegNo').value.trim(),
+                    type: document.getElementById('eqType').value.trim(),
+                    timestamp: Date.now()
+                };
+                try {
+                    await window.addDoc(getColRef('equipment'), data);
+                    await syncToGoogleSheets('addEquipment', data); // HANTAR DATA KE GOOGLE SHEETS
+                    
+                    showToast("Peralatan berjaya ditambah.", 'success');
+                    e.target.reset();
+                } catch(err) { showToast(err.message, 'error'); }
+            });
+            
+            // Add Timetable
+            document.getElementById('addTimetableForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    room: document.getElementById('ttRoom').value,
+                    day: document.getElementById('ttDay').value,
+                    startIdx: document.getElementById('ttStart').value,
+                    endIdx: document.getElementById('ttEnd').value,
+                    className: document.getElementById('ttClass').value,
+                    timestamp: Date.now()
+                };
+
+                const sIdxVal = TIME_SLOTS.findIndex(t => t.id === data.startIdx);
+                const eIdxVal = TIME_SLOTS.findIndex(t => t.id === data.endIdx);
+                
+                if (sIdxVal >= eIdxVal) {
+                    showToast("Masa tamat mesti selepas masa mula.", 'error');
+                    return;
+                }
+
+                // Check overlap in timetables
+                const isOverlap = state.timetables.some(t => {
+                    if (t.room !== data.room || t.day !== data.day) return false;
+                    const bSVal = TIME_SLOTS.findIndex(x => x.id === t.startIdx);
+                    const bEVal = TIME_SLOTS.findIndex(x => x.id === t.endIdx);
+                    return (sIdxVal < bEVal && eIdxVal > bSVal);
+                });
+
+                if (isOverlap) {
+                    showToast("Terdapat pertindihan jadual waktu pada bilik, hari dan masa ini.", 'error');
+                    return;
+                }
+
+                try {
+                    await window.addDoc(getColRef('timetables'), data);
+                    await syncToGoogleSheets('addTimetable', data); // HANTAR DATA KE GOOGLE SHEETS
+                    
+                    showToast("Jadual waktu ditambah.", 'success');
+                    e.target.reset();
+                } catch(err) { showToast(err.message, 'error'); }
+            });
+        }
+
+        // Global functions for inline onclick handlers in admin view
+        window.deleteClass = async (id) => {
+            if(confirm("Padam kelas ini?")) {
+                try { await window.deleteDoc(window.doc(state.db, 'artifacts', state.appId, 'public', 'data', 'classes', id)); }
+                catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+        window.deleteEquipment = async (id) => {
+            if(confirm("Padam peralatan ini?")) {
+                try { await window.deleteDoc(window.doc(state.db, 'artifacts', state.appId, 'public', 'data', 'equipment', id)); }
+                catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+        window.deleteTimetable = async (id) => {
+            if(confirm("Padam jadual waktu ini?")) {
+                try { await window.deleteDoc(window.doc(state.db, 'artifacts', state.appId, 'public', 'data', 'timetables', id)); }
+                catch(e) { showToast(e.message, 'error'); }
+            }
+        }
+
+        // --- Responsive Mobile Interactions ---
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+        }
+        
+        openBtn.addEventListener('click', toggleSidebar);
+        closeBtn.addEventListener('click', toggleSidebar);
+
+        // --- Bootstrap App ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+        });
+
+    </script>
+</body>
+</html>
