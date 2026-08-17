@@ -163,9 +163,15 @@
                                     <label class="block text-xs text-slate-400 mb-1">Tarikh</label>
                                     <input type="date" id="b-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Kelas (Pilihan)</label>
-                                    <select id="b-class" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"></select>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Kelas</label>
+                                        <select id="b-class" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Bil. Murid</label>
+                                        <input type="number" id="b-student-count" min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="Cth: 35">
+                                    </div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
@@ -180,7 +186,8 @@
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Tujuan Tempahan</label>
-                                <textarea id="b-purpose" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" rows="2" placeholder="Cth: Amali Sains"></textarea>
+                                <select id="b-purpose-select" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white mb-2" onchange="toggleOtherPurpose()"></select>
+                                <input type="text" id="b-purpose-other" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white hidden" placeholder="Sila nyatakan tujuan tempahan...">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-2">Peralatan Diperlukan (Pilihan)</label>
@@ -368,6 +375,14 @@
                             </div>
 
                             <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Tambah Tujuan Tempahan</h3>
+                                <form onsubmit="handleAdminAddPurpose(event)" class="flex gap-2">
+                                    <input type="text" id="a-purpose-name" required placeholder="Contoh: Amali Sains" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                    <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-lg text-sm font-medium transition-all">Tambah</button>
+                                </form>
+                            </div>
+
+                            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl shadow-lg">
                                 <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Pengesahan Pemulangan Pinjaman</h3>
                                 <p class="text-xs text-slate-400 mb-3">Klik butang sahkan pada senarai di bawah jika peralatan telah dipulangkan dalam keadaan baik.</p>
                                 <div class="max-h-48 overflow-y-auto space-y-2 pr-2" id="adminBorrowList">
@@ -388,25 +403,15 @@
         // Jika dibiarkan kosong (""), sistem akan menggunakan mod memori (simulasi).
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyzN-j6rfzwywPNrEpZD6tWjCH1kikaaSrVu4Gs2VmQgedOAZK0gXlJ6pNUdEvtxoZb/exec"; 
 
-        // Initial State (Data Dummy untuk Simulasi / Default)
+        // Initial State (Sistem dikosongkan untuk kegunaan sebenar)
         const state = {
             isAdmin: false,
             rooms: ['Makmal Komputer', 'Pusat Sumber Sekolah', 'Makmal Sains', 'Bilik RBT', 'Bilik Muzik'],
-            classes: ['1 Amanah', '2 Bestari', '3 Cemerlang', '4 Dedikasi', '5 Elit', '6 Fikrah'],
-            equipment: [
-                { id: 'EQ1', room: 'Makmal Komputer', name: 'Komputer Meja', type: 'ICT', qty: 20, regNo: 'MK-01' },
-                { id: 'EQ2', room: 'Pusat Sumber Sekolah', name: 'LCD Projector', type: 'Elektronik', qty: 2, regNo: 'PSS-01' },
-                { id: 'EQ3', room: 'Makmal Sains', name: 'Mikroskop', type: 'Radas', qty: 10, regNo: 'MS-05' },
-                { id: 'EQ4', room: 'Bilik RBT', name: 'Set Alatan Tangan', type: 'Alatan', qty: 5, regNo: 'RBT-12' },
-                { id: 'EQ5', room: 'Bilik Muzik', name: 'Gitar Akustik', type: 'Alat Muzik', qty: 3, regNo: 'BM-02' }
-            ],
-            bookings: [
-                // Sample dummy booking for UI showcase
-                { id: 'BK1', name: 'Cikgu Ali', room: 'Makmal Komputer', date: new Date().toISOString().split('T')[0], startTime: '08:15', endTime: '09:45', className: '5 Elit', purpose: 'Asas Sains Komputer', equipment: ['Komputer Meja'] }
-            ],
-            borrowings: [
-                { id: 'BW1', name: 'Ustaz Abu', room: 'Pusat Sumber Sekolah', startDate: new Date().toISOString().split('T')[0], returnDate: new Date().toISOString().split('T')[0], equipment: ['LCD Projector'], status: 'Meminjam' }
-            ],
+            classes: [],
+            purposes: [],
+            equipment: [],
+            bookings: [],
+            borrowings: [],
             timeSlots: ['07:45', '08:15', '08:45', '09:15', '09:45', '10:15', '10:45', '11:15', '11:45', '12:15', '12:45', '13:15']
         };
 
@@ -439,6 +444,7 @@
                 
                 // Map back data from sheet
                 if(data.classes && data.classes.length > 0) state.classes = data.classes.map(c => c['Nama Kelas']);
+                if(data.purposes && data.purposes.length > 0) state.purposes = data.purposes.map(p => p['Tujuan']);
                 if(data.equipment) {
                     state.equipment = data.equipment.map(e => ({
                         id: e.ID, room: e['Bilik Khas'], name: e['Nama Peralatan'], 
@@ -449,7 +455,7 @@
                     state.bookings = data.bookings.map(b => ({
                         id: b.ID, name: b['Nama Pemohon'], room: b['Bilik Khas'],
                         date: b.Tarikh, startTime: b['Masa Mula'], endTime: b['Masa Tamat'],
-                        className: b.Kelas, purpose: b.Tujuan, 
+                        className: b.Kelas, studentCount: b['Bilangan Murid'] || '', purpose: b.Tujuan, 
                         equipment: b['Peralatan Dipilih'] ? b['Peralatan Dipilih'].split(', ') : []
                     }));
                 }
@@ -522,6 +528,19 @@
             document.getElementById('mobileNavContainer').innerHTML = desktopNav;
         }
 
+        function toggleOtherPurpose() {
+            const select = document.getElementById('b-purpose-select');
+            const otherInput = document.getElementById('b-purpose-other');
+            if (select.value === 'lain-lain') {
+                otherInput.classList.remove('hidden');
+                otherInput.required = true;
+            } else {
+                otherInput.classList.add('hidden');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        }
+
         function showToast(msg, type="success") {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
@@ -545,6 +564,10 @@
             const roomOptions = state.rooms.map(r => `<option value="${r}">${r}</option>`).join('');
             const classOptions = `<option value="">Tiada (Untuk Guru)</option>` + state.classes.map(c => `<option value="${c}">${c}</option>`).join('');
             
+            const purposeOptions = `<option value="">-- Pilih Tujuan --</option>` + 
+                                   state.purposes.map(p => `<option value="${p}">${p}</option>`).join('') + 
+                                   `<option value="lain-lain">Lain-lain (Taip Sendiri)</option>`;
+            
             document.getElementById('jadual-room').innerHTML = roomOptions;
             document.getElementById('b-room').innerHTML = `<option value="">-- Pilih Bilik --</option>` + roomOptions;
             document.getElementById('p-room').innerHTML = `<option value="">-- Pilih Bilik --</option>` + roomOptions;
@@ -554,6 +577,7 @@
             document.getElementById('filter-room-equip').innerHTML = filterRoom;
 
             document.getElementById('b-class').innerHTML = classOptions;
+            document.getElementById('b-purpose-select').innerHTML = purposeOptions;
 
             const timeOptions = state.timeSlots.map(t => `<option value="${t}">${t}</option>`).join('');
             document.getElementById('b-time-start').innerHTML = timeOptions;
@@ -625,7 +649,7 @@
                             <!-- Tooltip -->
                             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-slate-800 text-xs text-left p-3 rounded-lg shadow-xl border border-slate-600 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
                                 <p class="font-bold text-white mb-1">${booking.name}</p>
-                                <p class="text-cyan-400">${booking.className || 'Umum'}</p>
+                                <p class="text-cyan-400">${booking.className || 'Umum'} ${booking.studentCount ? `(${booking.studentCount} Murid)` : ''}</p>
                                 <p class="text-slate-300 mt-1">${booking.purpose}</p>
                                 <p class="text-slate-400 mt-1">${booking.startTime} - ${booking.endTime}</p>
                             </div>
@@ -682,6 +706,11 @@
             const equipCheckboxes = document.querySelectorAll('#b-equip input:checked');
             const selectedEquips = Array.from(equipCheckboxes).map(cb => cb.value);
 
+            let purposeValue = document.getElementById('b-purpose-select').value;
+            if (purposeValue === 'lain-lain') {
+                purposeValue = document.getElementById('b-purpose-other').value;
+            }
+
             const payload = {
                 name: document.getElementById('b-name').value,
                 room: room,
@@ -689,7 +718,8 @@
                 startTime: start,
                 endTime: end,
                 className: document.getElementById('b-class').value,
-                purpose: document.getElementById('b-purpose').value,
+                studentCount: document.getElementById('b-student-count').value,
+                purpose: purposeValue,
                 equipment: selectedEquips
             };
 
@@ -701,6 +731,7 @@
                 
                 showToast("Tempahan berjaya disimpan!");
                 document.getElementById('bookingForm').reset();
+                toggleOtherPurpose(); // Reset other text box
                 document.getElementById('b-equip').innerHTML = `<p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>`;
                 renderBookings();
                 renderJadual(); // Refresh schedule
@@ -738,7 +769,7 @@
                     </div>
                     <div class="text-xs text-slate-300 space-y-1">
                         <p><i class="fa-regular fa-user w-4 text-slate-500"></i> ${b.name}</p>
-                        ${b.className ? `<p><i class="fa-solid fa-users w-4 text-slate-500"></i> Kelas: ${b.className}</p>` : ''}
+                        ${(b.className || b.studentCount) ? `<p><i class="fa-solid fa-users w-4 text-slate-500"></i> ${b.className ? 'Kelas: ' + b.className : 'Umum'} ${b.studentCount ? `<span class="text-slate-500">(${b.studentCount} Murid)</span>` : ''}</p>` : ''}
                         <p><i class="fa-solid fa-bullseye w-4 text-slate-500"></i> ${b.purpose}</p>
                     </div>
                 </div>`;
@@ -887,6 +918,18 @@
                 state.classes.push(val);
                 showToast(`Kelas ${val} ditambah.`);
                 document.getElementById('a-class-name').value = '';
+                populateDropdowns();
+            } catch(err){}
+        }
+
+        async function handleAdminAddPurpose(e) {
+            e.preventDefault();
+            const val = document.getElementById('a-purpose-name').value;
+            try {
+                await syncData('addPurpose', { name: val });
+                state.purposes.push(val);
+                showToast(`Tujuan '${val}' ditambah.`);
+                document.getElementById('a-purpose-name').value = '';
                 populateDropdowns();
             } catch(err){}
         }
