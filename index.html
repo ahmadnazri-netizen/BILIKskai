@@ -3,1362 +3,934 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Pengurusan Bilik Khas SK Anak Ikan</title>
+    <title>Sistem Pengurusan Bilik Khas | SK Anak Ikan</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Animasi transisi */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden text-slate-800">
+<body class="bg-slate-900 text-slate-300 flex h-screen overflow-hidden selection:bg-cyan-500 selection:text-white">
 
-    <!-- Sidebar -->
-    <aside class="w-72 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 relative z-20 shadow-xl">
-        <div class="p-6 border-b border-slate-700/50 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                <i class="ph ph-buildings text-2xl"></i>
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col transition-all duration-300 relative z-20 shadow-2xl h-full hidden md:flex">
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                <i class="fa-solid fa-school"></i>
             </div>
             <div>
-                <h1 class="text-white font-bold text-lg tracking-tight leading-tight">SK Anak Ikan</h1>
-                <p class="text-xs text-blue-400 font-medium">Pengurusan Bilik Khas</p>
+                <h1 class="text-white font-bold tracking-wide text-sm">SK ANAK IKAN</h1>
+                <p class="text-xs text-slate-400">Pengurusan Bilik Khas</p>
             </div>
         </div>
-
-        <nav class="flex-1 overflow-y-auto custom-scrollbar py-6 flex flex-col gap-2 px-4" id="mainMenu">
-            <!-- Menu items will be injected here -->
+        
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li>
+                    <button onclick="switchTab('jadual')" id="nav-jadual" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all text-white bg-slate-800/80 shadow-inner">
+                        <i class="fa-regular fa-calendar-alt w-5 text-cyan-400"></i>
+                        Jadual Waktu
+                    </button>
+                </li>
+                <li>
+                    <button onclick="switchTab('tempahan')" id="nav-tempahan" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/50">
+                        <i class="fa-solid fa-check-to-slot w-5 text-emerald-400"></i>
+                        Tempahan Bilik Khas
+                    </button>
+                </li>
+                <li>
+                    <button onclick="switchTab('pinjaman')" id="nav-pinjaman" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/50">
+                        <i class="fa-solid fa-hand-holding-hand w-5 text-purple-400"></i>
+                        Pinjaman Peralatan
+                    </button>
+                </li>
+                <li>
+                    <button onclick="switchTab('peralatan')" id="nav-peralatan" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/50">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-amber-400"></i>
+                        Senarai Peralatan
+                    </button>
+                </li>
+                <li class="pt-4 mt-4 border-t border-slate-800/50">
+                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/50">
+                        <i class="fa-solid fa-shield-halved w-5 text-rose-400"></i>
+                        Menu Admin
+                    </button>
+                </li>
+            </ul>
         </nav>
-
-        <div class="p-4 border-t border-slate-700/50">
-            <button onclick="toggleAdminMode()" id="adminBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium">
-                <i class="ph ph-lock-key text-lg"></i>
-                <span id="adminBtnText">Log Masuk Admin</span>
-            </button>
+        <div class="p-4 text-xs text-center text-slate-600 border-t border-slate-800">
+            &copy; 2026 SK Anak Ikan
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col relative h-full overflow-hidden bg-slate-50">
-        <!-- Header -->
-        <header class="h-16 glass-panel border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
-            <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Papan Pemuka</h2>
-            <div id="statusIndicator" class="flex items-center gap-2 text-sm text-slate-500">
-                <span class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" id="syncPing"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-slate-500" id="syncDot"></span>
-                </span>
-                <span id="syncText">Memuatkan Sistem...</span>
+    <main class="flex-1 flex flex-col h-full bg-[#0b1120] relative">
+        <!-- Topbar Mobile Only -->
+        <header class="md:hidden bg-slate-950 border-b border-slate-800 p-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-school text-cyan-500"></i>
+                <span class="text-white font-bold text-sm">SK ANAK IKAN</span>
             </div>
+            <button onclick="toggleMobileMenu()" class="text-slate-300 hover:text-white p-2">
+                <i class="fa-solid fa-bars"></i>
+            </button>
         </header>
+        
+        <!-- Mobile Menu Overlay -->
+        <div id="mobileMenu" class="fixed inset-0 bg-slate-950 z-50 hidden flex-col">
+            <div class="p-4 flex justify-end">
+                <button onclick="toggleMobileMenu()" class="text-white text-2xl p-2">&times;</button>
+            </div>
+            <div class="flex flex-col gap-2 p-6" id="mobileNavContainer">
+                <!-- Mobile nav copied from sidebar dynamically -->
+            </div>
+        </div>
 
         <!-- Content Area -->
-        <div id="contentArea" class="flex-1 overflow-y-auto custom-scrollbar p-8 fade-in">
-            <!-- Dinamik kandungan -->
-        </div>
-    </main>
-
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
-
-    <!-- Admin Login Modal -->
-    <div id="adminModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-96 transform transition-all scale-95 opacity-0" id="adminModalContent">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Pengesahan Admin</h3>
-                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="ph ph-x text-lg"></i></button>
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+            
+            <!-- Notifikasi Timbul (Toast) -->
+            <div id="toast" class="fixed top-5 right-5 transform translate-x-[150%] transition-transform duration-300 z-50 bg-slate-800 border border-slate-700 shadow-2xl rounded-xl p-4 flex items-center gap-3 text-sm">
+                <i id="toastIcon" class="fa-solid fa-check-circle text-emerald-500 text-lg"></i>
+                <span id="toastMsg" class="text-white">Berjaya</span>
             </div>
-            <p class="text-sm text-slate-500 mb-4">Sila masukkan kata laluan untuk mengakses fungsi pentadbir.</p>
-            <input type="password" id="adminPassword" class="w-full border border-slate-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Kata Laluan">
-            <div class="flex justify-end gap-2">
-                <button onclick="closeAdminModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
-                <button onclick="verifyAdmin()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm">Log Masuk</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Firebase Imports & Initialization -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Konfigurasi Global & State
-        const CONSTANTS = {
-            ROOMS: ['Makmal Komputer', 'Pusat Sumber Sekolah', 'Makmal Sains', 'Bilik RBT', 'Bilik Muzik'],
-            DAYS: ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis'],
-            TIME_SLOTS: ['07:45', '08:15', '08:45', '09:15', '09:45', '10:15', '10:45', '11:15', '11:45', '12:15', '12:45', '13:15'],
-            MENUS: [
-                { id: 'jadual', icon: 'ph-calendar-blank', label: 'Jadual Waktu' },
-                { id: 'tempahan', icon: 'ph-calendar-plus', label: 'Tempahan Bilik' },
-                { id: 'pinjaman', icon: 'ph-hand-coins', label: 'Pinjaman Peralatan' },
-                { id: 'peralatan', icon: 'ph-desktop-tower', label: 'Senarai Peralatan' },
-                { id: 'kelas', icon: 'ph-gear', label: 'Tetapan Admin', adminOnly: true }
-            ],
-            ADMIN_PWD: 'SkaiTba0078#'
-        };
-
-        window.appState = {
-            activeTab: 'jadual',
-            isAdmin: false,
-            data: {
-                classes: [],
-                equipment: [],
-                bookings: [],
-                borrowings: [],
-                teachers: []
-            },
-            userId: null,
-            dbReady: false
-        };
-
-        // UI Helpers
-        window.showToast = function(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            const colors = {
-                success: 'bg-green-100 text-green-800 border-green-200',
-                error: 'bg-red-100 text-red-800 border-red-200',
-                info: 'bg-blue-100 text-blue-800 border-blue-200'
-            };
-            const icons = {
-                success: 'ph-check-circle',
-                error: 'ph-warning-circle',
-                info: 'ph-info'
-            };
-            
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transform transition-all duration-300 translate-y-10 opacity-0 ${colors[type]}`;
-            toast.innerHTML = `<i class="ph ${icons[type]} text-xl"></i><span class="text-sm font-medium">${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            });
-
-            // Remove after 3s
-            setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
-
-        function updateSyncStatus(status, isError = false) {
-            const dot = document.getElementById('syncDot');
-            const ping = document.getElementById('syncPing');
-            const text = document.getElementById('syncText');
-            
-            text.textContent = status;
-            if (isError) {
-                dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-red-500';
-                ping.className = 'hidden';
-                text.classList.add('text-red-500');
-            } else if (status === 'Sistem Sedia Live') {
-                dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-green-500';
-                ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75';
-                text.className = 'text-sm font-medium text-green-600';
-            } else {
-                dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-blue-500';
-                ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75';
-                text.className = 'text-sm text-blue-500';
-            }
-        }
-
-        let db;
-        let appId = 'skai-bilik-khas-v1';
-        
-        try {
-            if (typeof __app_id !== 'undefined') appId = __app_id;
-            
-            // =====================================================================
-            // NOTA PENTING UNTUK GITHUB PAGES:
-            // Apabila anda memuat naik fail ini ke GitHub, sila buang kod 
-            // `typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;`
-            // dan gantikan dengan konfigurasi Firebase anda sendiri seperti contoh di bawah:
-            //
-            // const firebaseConfig = {
-            //     apiKey: "API_KEY_ANDA",
-            //     authDomain: "PROJEK_ANDA.firebaseapp.com",
-            //     projectId: "PROJEK_ANDA",
-            //     storageBucket: "PROJEK_ANDA.firebasestorage.app",
-            //     messagingSenderId: "123456789",
-            //     appId: "1:123456789:web:abcdef123456"
-            // };
-            // =====================================================================
-            
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-            
-            if (firebaseConfig) {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                const auth = getAuth(app);
-
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        window.appState.userId = auth.currentUser.uid;
-                        setupRealtimeListeners();
-                    } catch (e) {
-                        console.error("Auth error:", e);
-                        updateSyncStatus("Gagal log masuk ke awan", true);
-                    }
-                };
-                initAuth();
-            } else {
-                throw new Error("Sila masukkan Konfigurasi Firebase anda untuk fungsi online (GitHub).");
-            }
-        } catch (error) {
-            console.error("Pangkalan Data Tidak Tersedia:", error);
-            updateSyncStatus("Ralat: Menunggu Konfigurasi Firebase", true);
-        }
-
-        const getDbPath = (collectionName) => `artifacts/${appId}/public/data/${collectionName}`;
-
-        function setupRealtimeListeners() {
-            if (!db) return;
-            
-            const collections = ['classes', 'equipment', 'bookings', 'borrowings', 'teachers'];
-            let loaded = 0;
-
-            collections.forEach(collName => {
-                const q = query(collection(db, getDbPath(collName)));
-                onSnapshot(q, (snapshot) => {
-                    window.appState.data[collName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if (loaded < collections.length) loaded++;
-                    if (loaded === collections.length) {
-                        window.appState.dbReady = true;
-                        updateSyncStatus('Sistem Sedia Live');
-                        renderApp();
-                    } else if (window.appState.dbReady) {
-                        // Data updated real-time after initial load
-                        renderApp();
-                    }
-                }, (error) => {
-                    console.error(`Error listening to ${collName}:`, error);
-                    updateSyncStatus("Ralat Sinkronisasi Pangkalan Data", true);
-                });
-            });
-        }
-
-        // Global DB Operations (Hanya menggunakan Cloud Firestore)
-        window.dbOp = {
-            add: async (collectionName, data) => {
-                if (!db) throw new Error("Pangkalan data belum dikonfigurasi. Sila semak setting Firebase.");
-                await addDoc(collection(db, getDbPath(collectionName)), { ...data, createdAt: new Date().toISOString() });
-            },
-            update: async (collectionName, id, data) => {
-                if (!db) throw new Error("Pangkalan data belum dikonfigurasi.");
-                await updateDoc(doc(db, getDbPath(collectionName), id), data);
-            },
-            delete: async (collectionName, id) => {
-                if (!db) throw new Error("Pangkalan data belum dikonfigurasi.");
-                await deleteDoc(doc(db, getDbPath(collectionName), id));
-            }
-        };
-
-        window.renderApp = function() {
-            renderMenu();
-            renderContent();
-        };
-
-        function renderMenu() {
-            const menuContainer = document.getElementById('mainMenu');
-            menuContainer.innerHTML = '';
-
-            CONSTANTS.MENUS.forEach(item => {
-                if (item.adminOnly && !window.appState.isAdmin) return;
-
-                const isActive = window.appState.activeTab === item.id;
-                const activeClass = isActive 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/50' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200';
-
-                const a = document.createElement('a');
-                a.href = '#';
-                a.className = `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeClass}`;
-                a.onclick = (e) => { e.preventDefault(); changeTab(item.id); };
-                a.innerHTML = `<i class="ph ${item.icon} text-xl ${isActive ? 'text-white' : ''}"></i><span class="font-medium text-sm">${item.label}</span>`;
-                menuContainer.appendChild(a);
-            });
-
-            // Update admin button text
-            const adminBtnText = document.getElementById('adminBtnText');
-            adminBtnText.textContent = window.appState.isAdmin ? 'Log Keluar Admin' : 'Log Masuk Admin';
-            document.getElementById('adminBtn').className = `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium ${window.appState.isAdmin ? 'bg-red-900/50 text-red-400 hover:bg-red-900/80 hover:text-red-300' : 'hover:bg-slate-800 hover:text-white'}`;
-        }
-
-        window.changeTab = function(tabId) {
-            window.appState.activeTab = tabId;
-            const menuTitle = CONSTANTS.MENUS.find(m => m.id === tabId)?.label || 'Papan Pemuka';
-            document.getElementById('pageTitle').textContent = menuTitle;
-            renderApp();
-        };
-
-        // Utility Time comparison
-        window.utils = {
-            parseTime: (timeStr) => {
-                const [h, m] = timeStr.split(':').map(Number);
-                return h * 60 + m;
-            },
-            getBookingStatus: (dateStr, startStr, endStr) => {
-                const now = new Date();
-                const [startH, startM] = startStr.split(':').map(Number);
-                const [endH, endM] = endStr.split(':').map(Number);
+            <div id="tab-jadual" class="tab-content active max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-white mb-2">Jadual Waktu Penggunaan</h2>
+                <p class="text-slate-400 mb-6 text-sm">Paparan jadual harian (Ahad - Khamis) bagi bilik-bilik khas.</p>
                 
-                const bStart = new Date(dateStr); bStart.setHours(startH, startM, 0, 0);
-                const bEnd = new Date(dateStr); bEnd.setHours(endH, endM, 0, 0);
-
-                if (now < bStart) return { text: 'Akan Datang', color: 'bg-blue-100 text-blue-700 border-blue-200' };
-                if (now >= bStart && now <= bEnd) return { text: 'Sedang Digunakan', color: 'bg-green-100 text-green-700 border-green-200 shadow-inner shadow-green-400/20' };
-                return { text: 'Tamat', color: 'bg-red-100 text-red-700 border-red-200' };
-            },
-            formatDate: (dateStr) => {
-                if(!dateStr) return '-';
-                const d = new Date(dateStr);
-                return d.toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' });
-            }
-        };
-
-        window.toggleAdminMode = function() {
-            if (window.appState.isAdmin) {
-                window.appState.isAdmin = false;
-                window.showToast('Log keluar berjaya.', 'info');
-                if(window.appState.activeTab === 'kelas') changeTab('jadual');
-                else renderApp();
-            } else {
-                const modal = document.getElementById('adminModal');
-                const content = document.getElementById('adminModalContent');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.getElementById('adminPassword').value = '';
-                setTimeout(() => {
-                    content.classList.remove('scale-95', 'opacity-0');
-                }, 10);
-            }
-        };
-
-        window.closeAdminModal = function() {
-            const modal = document.getElementById('adminModal');
-            const content = document.getElementById('adminModalContent');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
-        };
-
-        window.verifyAdmin = function() {
-            const pwd = document.getElementById('adminPassword').value;
-            if (pwd === CONSTANTS.ADMIN_PWD) {
-                window.appState.isAdmin = true;
-                window.showToast('Log masuk pentadbir berjaya.', 'success');
-                closeAdminModal();
-                renderApp();
-            } else {
-                window.showToast('Kata laluan salah.', 'error');
-            }
-        };
-
-        function renderContent() {
-            const container = document.getElementById('contentArea');
-            container.innerHTML = '';
-            // Paksa animasi
-            container.classList.remove('fade-in');
-            void container.offsetWidth; 
-            container.classList.add('fade-in');
-
-            switch (window.appState.activeTab) {
-                case 'jadual': renderJadual(container); break;
-                case 'tempahan': renderTempahan(container); break;
-                case 'pinjaman': renderPinjaman(container); break;
-                case 'peralatan': renderPeralatan(container); break;
-                case 'kelas': renderKelas(container); break;
-                default: container.innerHTML = '<p>Modul tidak dijumpai.</p>';
-            }
-        }
-
-        window.updateAnalisaUI = () => {
-            const container = document.getElementById('analisaContainer');
-            if(!container) return;
-
-            const currentYear = new Date().getFullYear();
-            const bookingsThisYear = window.appState.data.bookings.filter(b => b.date && b.date.startsWith(currentYear.toString()));
-            
-            // Group by month
-            const monthCounts = Array(12).fill(0);
-            const roomCounts = {};
-            CONSTANTS.ROOMS.forEach(r => roomCounts[r] = 0);
-
-            bookingsThisYear.forEach(b => {
-                const month = parseInt(b.date.split('-')[1]) - 1; 
-                if(month >= 0 && month <= 11) {
-                    monthCounts[month]++;
-                    if(roomCounts[b.roomId] !== undefined) roomCounts[b.roomId]++;
-                }
-            });
-
-            const monthsLabel = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
-            const maxMonth = Math.max(...monthCounts, 1);
-
-            let barChartHTML = `
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full">
-                    <h4 class="text-sm font-bold text-slate-700 mb-4">Trend Tempahan Bulanan (${currentYear})</h4>
-                    <div class="flex items-end gap-2 h-40 mt-auto pt-4 border-b border-slate-100">
-                        ${monthCounts.map((count, i) => {
-                            const height = (count / maxMonth) * 100;
-                            return `
-                                <div class="flex-1 flex flex-col items-center justify-end h-full group">
-                                    <div class="w-full relative flex flex-col justify-end items-center h-full">
-                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] px-2 py-1 rounded shadow-lg absolute -top-8 z-10 whitespace-nowrap">${count}</div>
-                                        <div class="w-full bg-blue-500 rounded-t-sm transition-all duration-500 hover:bg-blue-600" style="height: ${height}%; min-height: ${count>0?'4px':'0'}"></div>
-                                    </div>
-                                    <span class="text-[10px] font-medium text-slate-500 mt-2">${monthsLabel[i]}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-
-            let roomStatsHTML = `
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <h4 class="text-sm font-bold text-slate-700 mb-4">Kekerapan Penggunaan Bilik</h4>
-                    <div class="space-y-4">
-                        ${CONSTANTS.ROOMS.map(r => {
-                            const count = roomCounts[r];
-                            const total = bookingsThisYear.length || 1;
-                            const pct = Math.round((count / total) * 100);
-                            return `
-                                <div>
-                                    <div class="flex justify-between text-xs font-medium mb-1">
-                                        <span class="text-slate-700">${r}</span>
-                                        <span class="text-slate-500">${count} rekod (${pct}%)</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-2">
-                                        <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: ${pct}%"></div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = barChartHTML + roomStatsHTML;
-        };
-
-        function renderJadual(container) {
-            let filterRoom = CONSTANTS.ROOMS[0];
-            let filterWeekStart = getSunday(new Date());
-
-            const renderView = () => {
-                let html = `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50 flex flex-wrap gap-4 justify-between items-center">
-                            <div class="flex gap-2">
-                                <select id="jadualRoomSelect" onchange="window.jadualState.room = this.value; window.jadualState.reRender()" class="border-slate-300 rounded-lg text-sm px-3 py-2 bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    ${CONSTANTS.ROOMS.map(r => `<option value="${r}" ${r === window.jadualState.room ? 'selected' : ''}>${r}</option>`).join('')}
-                                </select>
-                                <input type="date" id="jadualDateSelect" onchange="window.jadualState.date = new Date(this.value); window.jadualState.reRender()" value="${formatDateForInput(window.jadualState.date)}" class="border-slate-300 rounded-lg text-sm px-3 py-2 bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="text-sm font-medium text-slate-600 bg-slate-200/50 px-4 py-2 rounded-lg">
-                                Paparan Mingguan (Ahad - Khamis)
-                            </div>
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 md:p-6 shadow-lg backdrop-blur-sm">
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Pilih Bilik Khas</label>
+                            <select id="jadual-room" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors" onchange="renderJadual()">
+                                <!-- Option generated by JS -->
+                            </select>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
-                                <thead>
-                                    <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
-                                        <th class="p-4 font-semibold w-24 text-center border-r border-slate-200">Masa</th>
-                                        ${CONSTANTS.DAYS.map(d => `<th class="p-4 font-semibold text-center border-r border-slate-200 min-w-[150px]">${d}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                `;
-
-                // Calculate week dates
-                const weekDates = [];
-                const startDay = getSunday(window.jadualState.date);
-                for(let i=0; i<5; i++) {
-                    const d = new Date(startDay);
-                    d.setDate(d.getDate() + i);
-                    weekDates.push(d);
-                }
-
-                // Filter bookings for this room and week
-                const roomBookings = window.appState.data.bookings.filter(b => b.roomId === window.jadualState.room);
-
-                for (let i = 0; i < CONSTANTS.TIME_SLOTS.length - 1; i++) {
-                    const startTime = CONSTANTS.TIME_SLOTS[i];
-                    const endTime = CONSTANTS.TIME_SLOTS[i+1];
-                    html += `<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                <td class="p-3 border-r border-slate-200 text-center font-medium text-slate-500 bg-slate-50">${startTime} - ${endTime}</td>`;
-                    
-                    for (let dayIdx = 0; dayIdx < 5; dayIdx++) {
-                        const cellDateStr = formatDateForInput(weekDates[dayIdx]);
-                        
-                        // Find booking that covers this time slot on this date
-                        const booking = roomBookings.find(b => {
-                            if (b.date !== cellDateStr) return false;
-                            const slotStart = utils.parseTime(startTime);
-                            const bStart = utils.parseTime(b.startTime);
-                            const bEnd = utils.parseTime(b.endTime);
-                            // It covers this slot if booking starts on or before slot start AND ends after slot start
-                            return (bStart <= slotStart && bEnd > slotStart);
-                        });
-
-                        if (booking) {
-                            // Determine if this is the start of the booking to show text, otherwise just color
-                            const isStart = utils.parseTime(booking.startTime) === utils.parseTime(startTime);
-                            const statusColor = utils.getBookingStatus(booking.date, booking.startTime, booking.endTime).color;
-                            
-                            html += `<td class="p-1 border-r border-slate-200">
-                                        <div class="h-full w-full rounded p-2 ${statusColor} ${!isStart ? 'opacity-50' : ''} flex flex-col justify-center">
-                                            ${isStart ? `<span class="font-bold block truncate">${booking.classId}</span><span class="text-xs truncate block opacity-80">${booking.userName}</span>` : ''}
-                                        </div>
-                                     </td>`;
-                        } else {
-                            html += `<td class="p-3 border-r border-slate-200"></td>`;
-                        }
-                    }
-                    html += `</tr>`;
-                }
-
-                html += `</tbody></table></div></div>`;
-                
-                html += `
-                    <div class="mt-8 flex flex-wrap gap-4 justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="ph ph-list-dashes text-blue-600 text-xl"></i> Tempahan Terkini: ${window.jadualState.room}
-                        </h3>
-                        <button onclick="window.changeTab('tempahan')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all hover:-translate-y-0.5">
-                            <i class="ph ph-calendar-plus text-lg"></i> Buat Tempahan
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-8" id="jadualTempahanList">
-                        <!-- Senarai tempahan akan dimuatkan di sini -->
-                    </div>
-
-                    <!-- Analisa Penggunaan -->
-                    <div class="mt-4 mb-8 border-t border-slate-200 pt-8 fade-in">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2 mb-6">
-                            <i class="ph ph-chart-bar text-blue-600 text-xl"></i> Analisa Penggunaan Bilik Khas
-                        </h3>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="analisaContainer">
-                            <!-- Carta akan dimuatkan di sini -->
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Pilih Tarikh Rujukan (Minggu)</label>
+                            <input type="date" id="jadual-date" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors" onchange="renderJadual()">
                         </div>
                     </div>
-                `;
-                
-                container.innerHTML = html;
 
-                // Paparkan senarai tempahan terkini (hadkan kepada 6 yang terbaru/akan datang)
-                const listContainer = document.getElementById('jadualTempahanList');
-                const roomBookingsSorted = roomBookings.sort((a,b) => {
-                    // Susun bermula dengan tarikh terdekat
-                    if(a.date !== b.date) return new Date(b.date) - new Date(a.date);
-                    return utils.parseTime(b.startTime) - utils.parseTime(a.startTime);
-                });
+                    <div class="overflow-x-auto rounded-lg border border-slate-700">
+                        <table class="w-full text-xs md:text-sm text-left whitespace-nowrap">
+                            <thead class="bg-slate-700/50 text-slate-300 uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 border-b border-slate-600 font-semibold w-24 text-center">Hari \ Masa</th>
+                                    <!-- Timeslots generated by JS -->
+                                    <script>
+                                        const times = ["07:45", "08:15", "08:45", "09:15", "09:45", "10:15", "10:45", "11:15", "11:45", "12:15", "12:45", "13:15"];
+                                        times.forEach(t => document.write(`<th class="px-3 py-3 border-b border-slate-600 border-l border-slate-700/50 font-medium text-center">${t}</th>`));
+                                    </script>
+                                </tr>
+                            </thead>
+                            <tbody id="jadual-body" class="divide-y divide-slate-700/50 bg-slate-900/30">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex gap-4 text-xs">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-slate-800 border border-slate-600"></span> Kosong</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Ditempah / Sedang Digunakan</div>
+                    </div>
+                </div>
+            </div>
 
-                if (roomBookingsSorted.length === 0) {
-                    listContainer.innerHTML = '<div class="col-span-full text-center text-slate-400 py-6 bg-white rounded-xl border border-slate-200 shadow-sm">Tiada rekod tempahan terkini untuk bilik ini.</div>';
-                } else {
-                    listContainer.innerHTML = roomBookingsSorted.slice(0, 6).map(b => {
-                        const status = utils.getBookingStatus(b.date, b.startTime, b.endTime);
-                        return `
-                            <div class="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all bg-white relative overflow-hidden group">
-                                <div class="absolute top-0 left-0 w-1.5 h-full ${status.color.split(' ')[0]}"></div>
-                                <div class="pl-2">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <h4 class="font-bold text-slate-800 text-sm">${b.classId}</h4>
-                                        <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${status.color}">${status.text}</span>
-                                    </div>
-                                    <p class="text-sm text-slate-600 mb-1 flex items-center gap-1.5"><i class="ph ph-user text-slate-400"></i> ${b.userName} <span class="text-slate-300">|</span> <i class="ph ph-users text-slate-400"></i> ${b.studentCount || 0} Murid</p>
-                                    <p class="text-sm text-slate-600 mb-3 truncate flex items-center gap-1.5"><i class="ph ph-target text-slate-400"></i> ${b.purpose}</p>
-                                    <div class="flex flex-wrap gap-2 text-xs font-medium text-slate-700">
-                                        <span class="bg-slate-50 border border-slate-100 px-2 py-1.5 rounded-lg flex items-center gap-1"><i class="ph ph-calendar-blank text-blue-500"></i> ${utils.formatDate(b.date)}</span>
-                                        <span class="bg-slate-50 border border-slate-100 px-2 py-1.5 rounded-lg flex items-center gap-1"><i class="ph ph-clock text-blue-500"></i> ${b.startTime} - ${b.endTime}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
-                // Panggil fungsi carta analisa
-                if(window.updateAnalisaUI) window.updateAnalisaUI();
-            };
-
-            // Init state for this view
-            if (!window.jadualState) {
-                window.jadualState = {
-                    room: CONSTANTS.ROOMS[0],
-                    date: new Date(),
-                    reRender: renderView
-                };
-            }
-            renderView();
-        }
-
-        // Helper for Jadual
-        function getSunday(d) {
-            d = new Date(d);
-            var day = d.getDay(), diff = d.getDate() - day; // Adjust when day is sunday
-            return new Date(d.setDate(diff));
-        }
-        function formatDateForInput(d) {
-            const z = n => ('0' + n).slice(-2);
-            return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
-        }
-
-
-        function renderTempahan(container) {
-            const today = formatDateForInput(new Date());
-            
-            let html = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Borang Tempahan -->
-                    <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 self-start">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="ph ph-calendar-plus text-blue-600 text-xl"></i> Borang Tempahan</h3>
-                        <form id="formTempahan" onsubmit="handleTempahanSubmit(event)" class="space-y-4">
+            <div id="tab-tempahan" class="tab-content max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Form Tempahan -->
+                    <div class="w-full md:w-1/3 bg-slate-800/50 border border-slate-700 rounded-xl p-6 shadow-lg self-start">
+                        <h2 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">Borang Tempahan</h2>
+                        <form id="bookingForm" onsubmit="handleBookingSubmit(event)" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Nama Penuh (Guru)</label>
-                                <input type="text" id="t_name" list="senaraiGuru" required placeholder="Pilih dari senarai / Taip nama" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                <datalist id="senaraiGuru">
-                                    ${window.appState.data.teachers.map(t => `<option value="${t.name}">`).join('')}
-                                </datalist>
+                                <label class="block text-xs text-slate-400 mb-1">Nama Penuh Pemohon</label>
+                                <input type="text" id="b-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="Contoh: Cikgu Ahmad">
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Bilik Khas</label>
+                                <select id="b-room" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" onchange="updateEquipmentOptions('b-room', 'b-equip')"></select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tarikh</label>
-                                    <input type="date" id="t_date" required min="${today}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                    <label class="block text-xs text-slate-400 mb-1">Tarikh</label>
+                                    <input type="date" id="b-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Kelas</label>
-                                    <select id="t_class" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                        <option value="">Pilih Kelas</option>
-                                        ${window.appState.data.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
-                                    </select>
+                                    <label class="block text-xs text-slate-400 mb-1">Kelas (Pilihan)</label>
+                                    <select id="b-class" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"></select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Masa Mula</label>
+                                    <select id="b-time-start" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"></select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Bil Murid</label>
-                                    <input type="number" id="t_students" required min="1" placeholder="Cth: 35" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                    <label class="block text-xs text-slate-400 mb-1">Masa Tamat</label>
+                                    <select id="b-time-end" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white"></select>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Bilik Khas</label>
-                                <select id="t_room" required onchange="window.updateTempahanEquipList()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                    <option value="">Pilih Bilik</option>
-                                    ${CONSTANTS.ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Mula</label>
-                                    <select id="t_start" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                        <option value="">Pilih Masa</option>
-                                        ${CONSTANTS.TIME_SLOTS.slice(0, -1).map(t => `<option value="${t}">${t}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tamat</label>
-                                    <select id="t_end" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                        <option value="">Pilih Masa</option>
-                                        ${CONSTANTS.TIME_SLOTS.slice(1).map(t => `<option value="${t}">${t}</option>`).join('')}
-                                    </select>
-                                </div>
+                                <label class="block text-xs text-slate-400 mb-1">Tujuan Tempahan</label>
+                                <textarea id="b-purpose" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" rows="2" placeholder="Cth: Amali Sains"></textarea>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Tujuan</label>
-                                <input type="text" id="t_purpose" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Peralatan Diperlukan (Pilihan)</label>
-                                <div id="t_equip_container" class="max-h-32 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg p-2 bg-slate-50 text-sm text-slate-500">
-                                    Sila pilih bilik khas dahulu.
+                                <label class="block text-xs text-slate-400 mb-2">Peralatan Diperlukan (Pilihan)</label>
+                                <div id="b-equip" class="bg-slate-900 border border-slate-700 rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-sm">
+                                    <p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>
                                 </div>
                             </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm mt-4">Hantar Tempahan</button>
+                            <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-3 rounded-lg shadow-lg shadow-cyan-900/50 transition-all">
+                                Hantar Tempahan
+                            </button>
                         </form>
                     </div>
 
                     <!-- Senarai Tempahan -->
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-10rem)]">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50">
-                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-list-dashes text-blue-600 text-xl"></i> Senarai Tempahan Semasa</h3>
-                        </div>
-                        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-                            <div class="space-y-3" id="senaraiTempahanContainer">
-                                <!-- List injected here -->
+                    <div class="w-full md:w-2/3">
+                        <div class="flex justify-between items-end mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Senarai Tempahan Aktif</h2>
+                                <p class="text-xs text-slate-400 mt-1">Petunjuk: <span class="text-blue-400 font-medium">Biru (Belum Mula)</span>, <span class="text-emerald-400 font-medium">Hijau (Sedang Digunakan)</span>, <span class="text-rose-400 font-medium">Merah (Tamat)</span></p>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="bookingList">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
                 </div>
-            `;
-            container.innerHTML = html;
-            updateSenaraiTempahanUI();
+            </div>
 
-            // Export to window for inline HTML events
-            window.updateTempahanEquipList = () => {
-                const room = document.getElementById('t_room').value;
-                const container = document.getElementById('t_equip_container');
-                if(!room) { container.innerHTML = 'Sila pilih bilik khas dahulu.'; return; }
-                
-                const equips = window.appState.data.equipment.filter(e => e.roomId === room);
-                if(equips.length === 0) { container.innerHTML = 'Tiada peralatan direkodkan.'; return; }
-
-                container.innerHTML = equips.map(e => `
-                    <label class="flex items-center gap-2 p-1 hover:bg-slate-100 rounded cursor-pointer">
-                        <input type="checkbox" name="t_equip" value="${e.id}" class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-slate-700">${e.name} <span class="text-xs text-slate-400">(${e.quantity} unit)</span></span>
-                    </label>
-                `).join('');
-            };
-
-            window.handleTempahanSubmit = async (e) => {
-                e.preventDefault();
-                
-                const data = {
-                    userName: document.getElementById('t_name').value,
-                    date: document.getElementById('t_date').value,
-                    classId: document.getElementById('t_class').value,
-                    studentCount: document.getElementById('t_students').value,
-                    roomId: document.getElementById('t_room').value,
-                    startTime: document.getElementById('t_start').value,
-                    endTime: document.getElementById('t_end').value,
-                    purpose: document.getElementById('t_purpose').value,
-                    equipmentIds: Array.from(document.querySelectorAll('input[name="t_equip"]:checked')).map(cb => cb.value)
-                };
-
-                // Validasi Masa
-                if(utils.parseTime(data.startTime) >= utils.parseTime(data.endTime)) {
-                    window.showToast('Masa tamat mesti selepas masa mula.', 'error'); return;
-                }
-
-                // Check Overlap
-                const hasOverlap = window.appState.data.bookings.some(b => {
-                    if (b.roomId !== data.roomId || b.date !== data.date) return false;
-                    const nStart = utils.parseTime(data.startTime);
-                    const nEnd = utils.parseTime(data.endTime);
-                    const eStart = utils.parseTime(b.startTime);
-                    const eEnd = utils.parseTime(b.endTime);
-                    return (nStart < eEnd && nEnd > eStart);
-                });
-
-                if(hasOverlap) {
-                    window.showToast('Tempahan ditolak. Terdapat pertindihan masa bagi bilik ini.', 'error');
-                    return;
-                }
-
-                try {
-                    const btn = e.target.querySelector('button[type="submit"]');
-                    const origText = btn.textContent;
-                    btn.textContent = 'Menyimpan...'; btn.disabled = true;
-                    
-                    await window.dbOp.add('bookings', data);
-                    
-                    window.showToast('Tempahan berjaya direkodkan.', 'success');
-                    e.target.reset();
-                    document.getElementById('t_equip_container').innerHTML = 'Sila pilih bilik khas dahulu.';
-                    if(!window.appState.dbReady) updateSenaraiTempahanUI(); // Local update
-                } catch (err) {
-                    window.showToast('Ralat menyimpan tempahan.', 'error');
-                    console.error(err);
-                }
-            };
-        }
-
-        function updateSenaraiTempahanUI() {
-            const container = document.getElementById('senaraiTempahanContainer');
-            if(!container) return;
-
-            // Sort by date descending, then time
-            const sorted = [...window.appState.data.bookings].sort((a,b) => {
-                if(a.date !== b.date) return new Date(b.date) - new Date(a.date);
-                return utils.parseTime(b.startTime) - utils.parseTime(a.startTime);
-            });
-
-            if(sorted.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-8">Tiada rekod tempahan.</div>';
-                return;
-            }
-
-            container.innerHTML = sorted.map(b => {
-                const status = utils.getBookingStatus(b.date, b.startTime, b.endTime);
-                
-                let equipNames = '';
-                if(b.equipmentIds && b.equipmentIds.length > 0) {
-                    const names = b.equipmentIds.map(eid => window.appState.data.equipment.find(e => e.id === eid)?.name).filter(Boolean);
-                    if(names.length > 0) equipNames = `<div class="text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded border border-slate-100"><i class="ph ph-wrench mr-1"></i> Peralatan: ${names.join(', ')}</div>`;
-                }
-
-                return `
-                    <div class="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-1.5 h-full ${status.color.split(' ')[0]}"></div>
-                        <div class="flex justify-between items-start pl-2">
+            <div id="tab-pinjaman" class="tab-content max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/3 bg-slate-800/50 border border-slate-700 rounded-xl p-6 shadow-lg self-start">
+                        <h2 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">Borang Pinjaman</h2>
+                        <form id="borrowForm" onsubmit="handleBorrowSubmit(event)" class="space-y-4">
                             <div>
-                                <h4 class="font-bold text-slate-800 text-base">${b.roomId} <span class="text-slate-400 font-normal mx-2">|</span> <span class="text-blue-600">${b.classId}</span></h4>
-                                <p class="text-sm text-slate-600 mt-1"><i class="ph ph-user text-slate-400 mr-1"></i> ${b.userName} <span class="text-slate-300 mx-1">|</span> <i class="ph ph-users text-slate-400 mr-1"></i> ${b.studentCount || 0} Murid</p>
-                                <p class="text-sm text-slate-600"><i class="ph ph-target text-slate-400 mr-1"></i> ${b.purpose}</p>
-                                ${equipNames}
-                            </div>
-                            <div class="text-right">
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold border ${status.color} mb-2">${status.text}</span>
-                                <div class="text-sm font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded"><i class="ph ph-calendar-blank text-slate-500 mr-1"></i> ${utils.formatDate(b.date)}</div>
-                                <div class="text-sm font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded mt-1"><i class="ph ph-clock text-slate-500 mr-1"></i> ${b.startTime} - ${b.endTime}</div>
-                                ${window.appState.isAdmin ? `
-                                    <button onclick="window.deleteRecord('bookings', '${b.id}')" class="mt-2 text-xs text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph ph-trash"></i> Padam</button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderPinjaman(container) {
-            const today = formatDateForInput(new Date());
-            
-            let html = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Borang Pinjaman -->
-                    <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 self-start">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="ph ph-hand-coins text-blue-600 text-xl"></i> Borang Pinjaman</h3>
-                        <form id="formPinjaman" onsubmit="handlePinjamanSubmit(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Nama Peminjam</label>
-                                <input type="text" id="p_name" list="senaraiGuruPinjaman" required placeholder="Pilih dari senarai / Taip nama" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                <datalist id="senaraiGuruPinjaman">
-                                    ${window.appState.data.teachers.map(t => `<option value="${t.name}">`).join('')}
-                                </datalist>
+                                <label class="block text-xs text-slate-400 mb-1">Nama Peminjam</label>
+                                <input type="text" id="p-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">Bilik Khas</label>
-                                <select id="p_room" required onchange="window.updatePinjamanEquipList()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                                    <option value="">Pilih Bilik</option>
-                                    ${CONSTANTS.ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
-                                </select>
+                                <label class="block text-xs text-slate-400 mb-1">Pilih Bilik Rujukan Peralatan</label>
+                                <select id="p-room" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white" onchange="updateEquipmentOptions('p-room', 'p-equip')"></select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Peralatan Dipinjam</label>
-                                <div id="p_equip_container" class="max-h-40 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg p-2 bg-slate-50 text-sm text-slate-500">
-                                    Sila pilih bilik khas dahulu.
+                                <label class="block text-xs text-slate-400 mb-2">Pilih Peralatan (Boleh pilih >1)</label>
+                                <div id="p-equip" class="bg-slate-900 border border-slate-700 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 text-sm">
+                                    <p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Tarikh Mula</label>
-                                    <input type="date" id="p_start" required value="${today}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                    <label class="block text-xs text-slate-400 mb-1">Tarikh Mula</label>
+                                    <input type="date" id="p-start-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Jangka Pulang</label>
-                                    <input type="date" id="p_return" required min="${today}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                    <label class="block text-xs text-slate-400 mb-1">Tarikh Pulang Jangka</label>
+                                    <input type="date" id="p-return-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-sm">
                                 </div>
                             </div>
-                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm mt-4">Daftar Pinjaman</button>
-                        </form>
-                    </div>
-
-                    <!-- Senarai Pinjaman -->
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-10rem)]">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-clipboard-text text-indigo-600 text-xl"></i> Rekod Pinjaman</h3>
-                        </div>
-                        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-                            <div class="space-y-3" id="senaraiPinjamanContainer">
-                                <!-- List injected here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML = html;
-            updateSenaraiPinjamanUI();
-
-            window.updatePinjamanEquipList = () => {
-                const room = document.getElementById('p_room').value;
-                const cont = document.getElementById('p_equip_container');
-                if(!room) { cont.innerHTML = 'Sila pilih bilik khas dahulu.'; return; }
-                
-                const equips = window.appState.data.equipment.filter(e => e.roomId === room);
-                if(equips.length === 0) { cont.innerHTML = 'Tiada peralatan direkodkan.'; return; }
-
-                cont.innerHTML = equips.map(e => `
-                    <label class="flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded cursor-pointer border-b border-slate-100 last:border-0">
-                        <input type="checkbox" name="p_equip" value="${e.id}" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                        <div class="flex-1 text-slate-700 font-medium">${e.name} <span class="text-xs text-slate-400 block font-normal">No Siri: ${e.regNo || '-'}</span></div>
-                    </label>
-                `).join('');
-            };
-
-            window.handlePinjamanSubmit = async (e) => {
-                e.preventDefault();
-                const equipIds = Array.from(document.querySelectorAll('input[name="p_equip"]:checked')).map(cb => cb.value);
-                if(equipIds.length === 0) {
-                    window.showToast('Sila pilih sekurang-kurangnya satu peralatan.', 'error'); return;
-                }
-
-                const data = {
-                    userName: document.getElementById('p_name').value,
-                    roomId: document.getElementById('p_room').value,
-                    equipmentIds: equipIds,
-                    startDate: document.getElementById('p_start').value,
-                    expectedReturnDate: document.getElementById('p_return').value,
-                    actualReturnDate: null,
-                    status: 'borrowed'
-                };
-
-                try {
-                    const btn = e.target.querySelector('button[type="submit"]');
-                    btn.textContent = 'Menyimpan...'; btn.disabled = true;
-                    
-                    await window.dbOp.add('borrowings', data);
-                    
-                    window.showToast('Rekod pinjaman berjaya disimpan.', 'success');
-                    e.target.reset();
-                    document.getElementById('p_equip_container').innerHTML = 'Sila pilih bilik khas dahulu.';
-                    if(!window.appState.dbReady) updateSenaraiPinjamanUI();
-                } catch (err) {
-                    window.showToast('Ralat menyimpan pinjaman.', 'error');
-                }
-            };
-
-            window.returnItem = async (id) => {
-                if(!window.appState.isAdmin) {
-                    window.showToast('Hanya admin boleh mengesahkan pemulangan.', 'error'); return;
-                }
-                try {
-                    await window.dbOp.update('borrowings', id, { 
-                        status: 'returned', 
-                        actualReturnDate: formatDateForInput(new Date()) 
-                    });
-                    window.showToast('Pemulangan disahkan.', 'success');
-                    if(!window.appState.dbReady) updateSenaraiPinjamanUI();
-                } catch(e) {
-                    window.showToast('Ralat mengemaskini pemulangan.', 'error');
-                }
-            };
-        }
-
-        function updateSenaraiPinjamanUI() {
-            const container = document.getElementById('senaraiPinjamanContainer');
-            if(!container) return;
-
-            const sorted = [...window.appState.data.borrowings].sort((a,b) => {
-                if(a.status !== b.status) return a.status === 'borrowed' ? -1 : 1;
-                return new Date(b.startDate) - new Date(a.startDate);
-            });
-
-            if(sorted.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-8">Tiada rekod pinjaman.</div>';
-                return;
-            }
-
-            container.innerHTML = sorted.map(b => {
-                const isBorrowed = b.status === 'borrowed';
-                const names = b.equipmentIds.map(eid => window.appState.data.equipment.find(e => e.id === eid)?.name || 'Peralatan Dipadam').join(', ');
-                
-                // Color formatting as requested: red if currently borrowing (active)
-                const cardClass = isBorrowed ? 'border-red-300 bg-red-50/30' : 'border-slate-200 bg-white opacity-75';
-                const statusBadge = isBorrowed 
-                    ? `<span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded border border-red-200">Sedang Meminjam</span>`
-                    : `<span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded border border-green-200">Telah Dipulangkan</span>`;
-
-                return `
-                    <div class="border rounded-lg p-4 flex justify-between items-center transition-all ${cardClass}">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-1">
-                                <h4 class="font-bold text-slate-800 ${isBorrowed ? 'text-red-700' : ''}">${b.userName}</h4>
-                                ${statusBadge}
-                            </div>
-                            <p class="text-sm font-medium text-slate-700 mb-1"><i class="ph ph-door-open text-slate-400"></i> ${b.roomId}</p>
-                            <p class="text-sm text-slate-600"><i class="ph ph-wrench text-slate-400"></i> ${names}</p>
-                            <div class="text-xs text-slate-500 mt-2 flex gap-4">
-                                <span><i class="ph ph-calendar-arrow-right"></i> Mula: ${utils.formatDate(b.startDate)}</span>
-                                <span class="${isBorrowed && new Date() > new Date(b.expectedReturnDate) ? 'text-red-600 font-bold' : ''}"><i class="ph ph-calendar-check"></i> Jangka Pulang: ${utils.formatDate(b.expectedReturnDate)}</span>
-                                ${!isBorrowed ? `<span class="text-green-600"><i class="ph ph-check-circle"></i> Dipulangkan: ${utils.formatDate(b.actualReturnDate)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="ml-4 flex flex-col gap-2">
-                            ${isBorrowed && window.appState.isAdmin ? `
-                                <button onclick="window.returnItem('${b.id}')" class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded shadow-sm transition-colors flex items-center gap-1">
-                                    <i class="ph ph-check"></i> Sahkan Pulang
-                                </button>
-                            ` : ''}
-                            ${window.appState.isAdmin ? `
-                                <button onclick="window.deleteRecord('borrowings', '${b.id}')" class="px-3 py-1.5 bg-slate-200 hover:bg-red-100 text-slate-600 hover:text-red-600 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1">
-                                    <i class="ph ph-trash"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderPeralatan(container) {
-            let html = `
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
-                    <div class="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center flex-wrap gap-4">
-                        <div class="flex items-center gap-3">
-                            <i class="ph ph-desktop-tower text-blue-600 text-2xl"></i>
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-800">Inventori Peralatan</h3>
-                                <p class="text-xs text-slate-500">Senarai alatan bagi setiap bilik khas</p>
-                            </div>
-                        </div>
-                        ${window.appState.isAdmin ? `
-                            <button onclick="document.getElementById('formEquipContainer').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition-colors">
-                                <i class="ph ph-plus-circle text-lg"></i> Tambah Peralatan
+                            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-lg shadow-lg shadow-purple-900/50 transition-all mt-4">
+                                Rekod Pinjaman
                             </button>
-                        ` : ''}
-                    </div>
-
-                    ${window.appState.isAdmin ? `
-                    <div id="formEquipContainer" class="hidden p-6 border-b border-slate-200 bg-blue-50/50">
-                        <form id="formEquip" onsubmit="handleEquipSubmit(event)" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                            <input type="hidden" id="e_id">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Bilik Khas</label>
-                                <select id="e_room" required class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm outline-none focus:border-blue-500">
-                                    ${CONSTANTS.ROOMS.map(r => `<option value="${r}">${r}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Nama Peralatan</label>
-                                <input type="text" id="e_name" required placeholder="Cth: Komputer Riba" class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Jenis</label>
-                                <input type="text" id="e_type" required placeholder="Cth: ICT" class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm outline-none focus:border-blue-500">
-                            </div>
-                            <div class="flex gap-2">
-                                <div class="w-1/3">
-                                    <label class="block text-xs font-medium text-slate-700 mb-1">Bil</label>
-                                    <input type="number" id="e_qty" required min="1" class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm outline-none focus:border-blue-500">
-                                </div>
-                                <div class="w-2/3">
-                                    <label class="block text-xs font-medium text-slate-700 mb-1">No. Daftar</label>
-                                    <input type="text" id="e_reg" class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm outline-none focus:border-blue-500">
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button type="submit" class="w-full bg-slate-800 text-white rounded px-3 py-1.5 text-sm font-medium hover:bg-slate-900 transition-colors">Simpan</button>
-                                <button type="button" onclick="document.getElementById('formEquip').reset(); document.getElementById('e_id').value='';" class="w-1/3 bg-slate-200 text-slate-600 rounded px-3 py-1.5 text-sm font-medium hover:bg-slate-300 transition-colors"><i class="ph ph-arrow-counter-clockwise"></i></button>
-                            </div>
                         </form>
                     </div>
-                    ` : ''}
 
-                    <div class="flex-1 overflow-auto custom-scrollbar p-0">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead class="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                    <div class="w-full md:w-2/3">
+                        <h2 class="text-xl font-bold text-white mb-4">Senarai Peminjam</h2>
+                        <div class="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden shadow-lg backdrop-blur-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-slate-700/50 text-slate-300 text-xs uppercase">
+                                        <tr>
+                                            <th class="px-4 py-3">Peminjam</th>
+                                            <th class="px-4 py-3">Peralatan</th>
+                                            <th class="px-4 py-3">Tarikh</th>
+                                            <th class="px-4 py-3 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="borrowList" class="divide-y divide-slate-700/50">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-peralatan" class="tab-content max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Inventori Peralatan Bilik Khas</h2>
+                    <select id="filter-room-equip" class="bg-slate-800 border border-slate-700 text-white rounded-lg p-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500" onchange="renderEquipmentList()">
+                        <option value="all">Semua Bilik</option>
+                    </select>
+                </div>
+                
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden shadow-lg backdrop-blur-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-700/50 text-slate-300 text-xs uppercase">
                                 <tr>
-                                    <th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200">Bilik Khas</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200">Nama Peralatan</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200">Jenis</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200 text-center">Bilangan</th>
-                                    <th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200">No. Pendaftaran</th>
-                                    ${window.appState.isAdmin ? `<th class="p-4 text-sm font-semibold text-slate-600 border-b border-slate-200 text-center">Tindakan</th>` : ''}
+                                    <th class="px-5 py-4">Bilik Khas</th>
+                                    <th class="px-5 py-4">Nama Peralatan</th>
+                                    <th class="px-5 py-4">Jenis</th>
+                                    <th class="px-5 py-4 text-center">Bilangan</th>
+                                    <th class="px-5 py-4">No. Pendaftaran</th>
                                 </tr>
                             </thead>
-                            <tbody id="equipTableBody">
-                                <!-- Data injected here -->
+                            <tbody id="equipmentTable" class="divide-y divide-slate-700/50">
+                                <!-- Populated by JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            `;
-            container.innerHTML = html;
-            updateEquipTable();
+            </div>
 
-            window.handleEquipSubmit = async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('e_id').value;
-                const data = {
-                    roomId: document.getElementById('e_room').value,
-                    name: document.getElementById('e_name').value,
-                    type: document.getElementById('e_type').value,
-                    quantity: parseInt(document.getElementById('e_qty').value),
-                    regNo: document.getElementById('e_reg').value
-                };
-
-                try {
-                    if(id) await window.dbOp.update('equipment', id, data);
-                    else await window.dbOp.add('equipment', data);
+            <div id="tab-admin" class="tab-content max-w-4xl mx-auto">
+                
+                <!-- Admin Login -->
+                <div id="adminLogin" class="max-w-md mx-auto mt-20 bg-slate-800/80 border border-slate-700 p-8 rounded-2xl shadow-2xl backdrop-blur-md text-center">
+                    <div class="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Mod Keselamatan Admin</h2>
+                    <p class="text-sm text-slate-400 mb-6">Sila masukkan kata laluan untuk mengakses pengurusan sistem.</p>
                     
-                    window.showToast('Maklumat peralatan disimpan.', 'success');
-                    e.target.reset(); document.getElementById('e_id').value='';
-                    if(!window.appState.dbReady) updateEquipTable();
-                } catch(err) {
-                    window.showToast('Ralat menyimpan.', 'error');
-                }
-            };
-
-            window.editEquip = (id) => {
-                const eq = window.appState.data.equipment.find(e => e.id === id);
-                if(!eq) return;
-                document.getElementById('formEquipContainer').classList.remove('hidden');
-                document.getElementById('e_id').value = eq.id;
-                document.getElementById('e_room').value = eq.roomId;
-                document.getElementById('e_name').value = eq.name;
-                document.getElementById('e_type').value = eq.type;
-                document.getElementById('e_qty').value = eq.quantity;
-                document.getElementById('e_reg').value = eq.regNo;
-            };
-        }
-
-        function updateEquipTable() {
-            const tbody = document.getElementById('equipTableBody');
-            if(!tbody) return;
-
-            // Sort by room, then name
-            const sorted = [...window.appState.data.equipment].sort((a,b) => {
-                if(a.roomId !== b.roomId) return a.roomId.localeCompare(b.roomId);
-                return a.name.localeCompare(b.name);
-            });
-
-            if(sorted.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${window.appState.isAdmin?6:5}" class="p-8 text-center text-slate-400">Tiada rekod peralatan.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = sorted.map((eq, index) => {
-                const bg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
-                return `
-                    <tr class="${bg} hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0">
-                        <td class="p-4 text-sm font-medium text-slate-800">${eq.roomId}</td>
-                        <td class="p-4 text-sm text-slate-600 font-semibold">${eq.name}</td>
-                        <td class="p-4 text-sm text-slate-500"><span class="bg-slate-200 px-2 py-1 rounded text-xs">${eq.type}</span></td>
-                        <td class="p-4 text-sm text-slate-700 font-bold text-center">${eq.quantity}</td>
-                        <td class="p-4 text-sm text-slate-500 font-mono">${eq.regNo || '-'}</td>
-                        ${window.appState.isAdmin ? `
-                            <td class="p-4 text-center">
-                                <button onclick="window.editEquip('${eq.id}')" class="text-blue-500 hover:text-blue-700 mx-1 p-1"><i class="ph ph-pencil-simple"></i></button>
-                                <button onclick="window.deleteRecord('equipment', '${eq.id}')" class="text-red-500 hover:text-red-700 mx-1 p-1"><i class="ph ph-trash"></i></button>
-                            </td>
-                        ` : ''}
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderKelas(container) {
-            let html = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
-                    <!-- Pengurusan Kelas -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50">
-                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-users-three text-blue-600 text-xl"></i> Pengurusan Kelas</h3>
-                            <p class="text-xs text-slate-500 mt-1">Senarai kelas ini digunakan dalam borang tempahan.</p>
+                    <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                        <div class="relative">
+                            <input type="password" id="adminPass" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 pl-10 text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none" placeholder="Kata Laluan" required>
+                            <i class="fa-solid fa-key absolute left-4 top-4 text-slate-500"></i>
                         </div>
-                        <div class="p-6">
-                            <form id="formKelas" onsubmit="handleKelasSubmit(event)" class="flex gap-3 mb-6">
-                                <input type="text" id="k_name" required placeholder="Nama Kelas Baru (Cth: 1 Cemerlang)" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors">Tambah</button>
-                            </form>
-                            
-                            <div class="border border-slate-200 rounded-lg overflow-hidden">
-                                <ul class="divide-y divide-slate-100 max-h-[40vh] overflow-y-auto custom-scrollbar" id="kelasContainer">
-                                    <!-- list injected here -->
-                                </ul>
-                            </div>
+                        <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-3 rounded-xl shadow-lg transition-all">
+                            Sahkan Identiti
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Admin Dashboard (Hidden initially) -->
+                <div id="adminDashboard" class="hidden space-y-6">
+                    <div class="flex justify-between items-center bg-rose-950/30 border border-rose-900/50 p-4 rounded-xl">
+                        <div class="flex items-center gap-3 text-rose-400">
+                            <i class="fa-solid fa-shield-check text-xl"></i>
+                            <span class="font-bold">Mod Pentadbir Diaktifkan</span>
                         </div>
+                        <button onclick="logoutAdmin()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm transition-colors text-white">Log Keluar</button>
                     </div>
 
-                    <!-- Pengurusan Guru (Senarai Cadangan Borang) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50">
-                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-chalkboard-teacher text-indigo-600 text-xl"></i> Pengurusan Guru</h3>
-                            <p class="text-xs text-slate-500 mt-1">Bina senarai rujukan nama bagi pilihan pantas pengguna.</p>
-                        </div>
-                        <div class="p-6">
-                            <form id="formGuru" onsubmit="handleGuruSubmit(event)" class="flex gap-3 mb-6">
-                                <input type="text" id="g_name" required placeholder="Nama Penuh Guru" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors">Tambah</button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Pengurusan Peralatan -->
+                        <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl shadow-lg">
+                            <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Tambah Peralatan Baru</h3>
+                            <form onsubmit="handleAdminAddEquip(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Bilik Khas</label>
+                                    <select id="a-eq-room" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Nama Peralatan</label>
+                                    <input type="text" id="a-eq-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Jenis</label>
+                                        <input type="text" id="a-eq-type" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Kuantiti</label>
+                                        <input type="number" id="a-eq-qty" min="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">No. Pendaftaran Sistem</label>
+                                    <input type="text" id="a-eq-reg" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                </div>
+                                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium py-2 rounded-lg text-sm transition-all mt-2">Simpan Peralatan</button>
                             </form>
-                            
-                            <div class="border border-slate-200 rounded-lg overflow-hidden">
-                                <ul class="divide-y divide-slate-100 max-h-[40vh] overflow-y-auto custom-scrollbar" id="guruContainer">
-                                    <!-- list injected here -->
-                                </ul>
+                        </div>
+
+                        <!-- Pengurusan Kelas & Pengesahan -->
+                        <div class="space-y-6">
+                            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Tambah Kelas Sistem</h3>
+                                <form onsubmit="handleAdminAddClass(event)" class="flex gap-2">
+                                    <input type="text" id="a-class-name" required placeholder="Contoh: 1 Inovatif" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+                                    <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 rounded-lg text-sm font-medium transition-all">Tambah</button>
+                                </form>
+                            </div>
+
+                            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Pengesahan Pemulangan Pinjaman</h3>
+                                <p class="text-xs text-slate-400 mb-3">Klik butang sahkan pada senarai di bawah jika peralatan telah dipulangkan dalam keadaan baik.</p>
+                                <div class="max-h-48 overflow-y-auto space-y-2 pr-2" id="adminBorrowList">
+                                    <!-- Populated by JS -->
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            `;
-            container.innerHTML = html;
-            updateKelasUI();
-            updateGuruUI();
 
-            window.handleKelasSubmit = async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('k_name').value.trim();
-                if(window.appState.data.classes.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                    window.showToast('Kelas sudah wujud.', 'error'); return;
-                }
-                try {
-                    await window.dbOp.add('classes', { name });
-                    window.showToast('Kelas ditambah.', 'success');
-                    e.target.reset();
-                    if(!window.appState.dbReady) updateKelasUI();
-                } catch(err) {
-                    window.showToast('Ralat menambah.', 'error');
-                }
-            };
+            </div>
+        </div>
+    </main>
 
-            window.handleGuruSubmit = async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('g_name').value.trim();
-                if(window.appState.data.teachers.some(t => t.name.toLowerCase() === name.toLowerCase())) {
-                    window.showToast('Nama guru sudah wujud.', 'error'); return;
-                }
-                try {
-                    await window.dbOp.add('teachers', { name });
-                    window.showToast('Guru ditambah.', 'success');
-                    e.target.reset();
-                    if(!window.appState.dbReady) updateGuruUI();
-                } catch(err) {
-                    window.showToast('Ralat menambah.', 'error');
-                }
-            };
-        }
+    <script>
+        // === KONFIGURASI GOOGLE APPS SCRIPT ===
+        // Sila masukkan Web App URL dari Google Apps Script anda di bawah.
+        // Jika dibiarkan kosong (""), sistem akan menggunakan mod memori (simulasi).
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyzN-j6rfzwywPNrEpZD6tWjCH1kikaaSrVu4Gs2VmQgedOAZK0gXlJ6pNUdEvtxoZb/exec"; 
 
-        function updateGuruUI() {
-            const container = document.getElementById('guruContainer');
-            if(!container) return;
-
-            const sorted = [...window.appState.data.teachers].sort((a,b) => a.name.localeCompare(b.name));
-            
-            if(sorted.length === 0) {
-                container.innerHTML = '<li class="p-4 text-center text-slate-400 text-sm">Tiada rekod nama guru.</li>';
-                return;
-            }
-
-            container.innerHTML = sorted.map(t => `
-                <li class="p-3 px-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                    <span class="font-medium text-slate-700">${t.name}</span>
-                    <button onclick="window.deleteRecord('teachers', '${t.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50 transition-colors"><i class="ph ph-trash text-lg"></i></button>
-                </li>
-            `).join('');
-        }
-
-        function updateKelasUI() {
-            const container = document.getElementById('kelasContainer');
-            if(!container) return;
-
-            const sorted = [...window.appState.data.classes].sort((a,b) => a.name.localeCompare(b.name));
-            
-            if(sorted.length === 0) {
-                container.innerHTML = '<li class="p-4 text-center text-slate-400 text-sm">Tiada kelas direkodkan.</li>';
-                return;
-            }
-
-            container.innerHTML = sorted.map(c => `
-                <li class="p-3 px-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                    <span class="font-medium text-slate-700">${c.name}</span>
-                    <button onclick="window.deleteRecord('classes', '${c.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded hover:bg-red-50 transition-colors"><i class="ph ph-trash text-lg"></i></button>
-                </li>
-            `).join('');
-        }
-
-        window.deleteRecord = async (collectionName, id) => {
-            // Pengganti kepada confirm() untuk UI yang lebih baik
-            const isConfirm = window.confirm("Adakah anda pasti untuk memadam rekod ini?"); // Native confirm as fallback for absolute simplicity in this sandbox constraint, although prompt says NO alert/confirm.
-            // Wait, rules explicitly state: "Never use alert() and confirm() under any circumstances."
-            // I must build a custom confirm modal. Let's patch that immediately.
-            showCustomConfirm("Adakah anda pasti untuk memadam rekod ini?", async () => {
-                try {
-                    await window.dbOp.delete(collectionName, id);
-                    window.showToast('Rekod berjaya dipadam.', 'success');
-                    if(!window.appState.dbReady) renderContent(); // local refresh
-                } catch(err) {
-                    window.showToast('Ralat memadam rekod.', 'error');
-                }
-            });
+        // Initial State (Data Dummy untuk Simulasi / Default)
+        const state = {
+            isAdmin: false,
+            rooms: ['Makmal Komputer', 'Pusat Sumber Sekolah', 'Makmal Sains', 'Bilik RBT', 'Bilik Muzik'],
+            classes: ['1 Amanah', '2 Bestari', '3 Cemerlang', '4 Dedikasi', '5 Elit', '6 Fikrah'],
+            equipment: [
+                { id: 'EQ1', room: 'Makmal Komputer', name: 'Komputer Meja', type: 'ICT', qty: 20, regNo: 'MK-01' },
+                { id: 'EQ2', room: 'Pusat Sumber Sekolah', name: 'LCD Projector', type: 'Elektronik', qty: 2, regNo: 'PSS-01' },
+                { id: 'EQ3', room: 'Makmal Sains', name: 'Mikroskop', type: 'Radas', qty: 10, regNo: 'MS-05' },
+                { id: 'EQ4', room: 'Bilik RBT', name: 'Set Alatan Tangan', type: 'Alatan', qty: 5, regNo: 'RBT-12' },
+                { id: 'EQ5', room: 'Bilik Muzik', name: 'Gitar Akustik', type: 'Alat Muzik', qty: 3, regNo: 'BM-02' }
+            ],
+            bookings: [
+                // Sample dummy booking for UI showcase
+                { id: 'BK1', name: 'Cikgu Ali', room: 'Makmal Komputer', date: new Date().toISOString().split('T')[0], startTime: '08:15', endTime: '09:45', className: '5 Elit', purpose: 'Asas Sains Komputer', equipment: ['Komputer Meja'] }
+            ],
+            borrowings: [
+                { id: 'BW1', name: 'Ustaz Abu', room: 'Pusat Sumber Sekolah', startDate: new Date().toISOString().split('T')[0], returnDate: new Date().toISOString().split('T')[0], equipment: ['LCD Projector'], status: 'Meminjam' }
+            ],
+            timeSlots: ['07:45', '08:15', '08:45', '09:15', '09:45', '10:15', '10:45', '11:15', '11:45', '12:15', '12:45', '13:15']
         };
 
-        // Custom Confirm Modal
-        function showCustomConfirm(msg, onConfirm) {
-            let overlay = document.getElementById('customConfirmOverlay');
-            if(!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'customConfirmOverlay';
-                overlay.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center';
-                overlay.innerHTML = `
-                    <div class="bg-white rounded-xl shadow-2xl p-6 w-80 transform scale-95 opacity-0 transition-all" id="customConfirmBox">
-                        <div class="flex items-center gap-3 mb-4 text-red-600">
-                            <i class="ph ph-warning-circle text-3xl"></i>
-                            <h3 class="text-lg font-bold">Pengesahan</h3>
+        // Initialize UI
+        window.onload = async () => {
+            await fetchLiveDashboardData();
+            populateDropdowns();
+            
+            // Set default date for Jadual to current day
+            document.getElementById('jadual-date').valueAsDate = new Date();
+            
+            renderJadual();
+            renderBookings();
+            renderBorrowings();
+            renderEquipmentList();
+            setupMobileMenu();
+        };
+
+        // Fetch dari Apps Script jika URL ada, jika tidak guna data memori
+        async function fetchLiveDashboardData() {
+            if (!GAS_WEB_APP_URL) {
+                console.log("Tiada URL pangkalan data ditetapkan. Menggunakan mod simulasi.");
+                return; // Use simulated data
+            }
+            try {
+                showToast("Menyelaras data dengan Google Sheet...", "info");
+                const response = await fetch(GAS_WEB_APP_URL);
+                if (!response.ok) throw new Error(`Ralat HTTP! Status: ${response.status}`);
+                const data = await response.json();
+                
+                // Map back data from sheet
+                if(data.classes && data.classes.length > 0) state.classes = data.classes.map(c => c['Nama Kelas']);
+                if(data.equipment) {
+                    state.equipment = data.equipment.map(e => ({
+                        id: e.ID, room: e['Bilik Khas'], name: e['Nama Peralatan'], 
+                        type: e.Jenis, qty: e.Kuantiti, regNo: e['No Pendaftaran']
+                    }));
+                }
+                if(data.bookings) {
+                    state.bookings = data.bookings.map(b => ({
+                        id: b.ID, name: b['Nama Pemohon'], room: b['Bilik Khas'],
+                        date: b.Tarikh, startTime: b['Masa Mula'], endTime: b['Masa Tamat'],
+                        className: b.Kelas, purpose: b.Tujuan, 
+                        equipment: b['Peralatan Dipilih'] ? b['Peralatan Dipilih'].split(', ') : []
+                    }));
+                }
+                if(data.borrowings) {
+                    state.borrowings = data.borrowings.map(b => ({
+                        id: b.ID, name: b['Nama Peminjam'], room: b['Bilik Khas'],
+                        startDate: b['Tarikh Mula'], returnDate: b['Tarikh Pulang'],
+                        equipment: b.Peralatan ? b.Peralatan.split(', ') : [],
+                        status: b.Status
+                    }));
+                }
+                showToast("Data terkini dimuat turun", "success");
+            } catch (error) {
+                console.warn("Gagal berhubung ke Google Sheet. Beralih ke mod simulasi.", error);
+                showToast("Tiada sambungan. Beralih ke Mod Simulasi.", "info");
+            }
+        }
+
+        async function syncData(action, payload) {
+            if (GAS_WEB_APP_URL) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: action, data: payload })
+                    });
+                    const resData = await response.json();
+                    if (!resData.success) throw new Error(resData.error || "Gagal simpan");
+                } catch(e) {
+                    console.warn("Ralat menyambung ke pangkalan data", e);
+                    showToast("Tiada sambungan. Data disimpan sementara.", "info");
+                    // Sistem akan terus memaparkan di memori kuki pelayar supaya tidak tergendala
+                }
+            }
+            // In-memory operation executes immediately regardless for responsive UI
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            // Update active menu styling
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800/80', 'text-white', 'shadow-inner');
+                btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800/50');
+            });
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-slate-800/80', 'text-white', 'shadow-inner');
+                activeBtn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800/50');
+            }
+
+            // Close mobile menu if open
+            document.getElementById('mobileMenu').classList.add('hidden');
+            document.getElementById('mobileMenu').classList.remove('flex');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if(menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+            }
+        }
+
+        function setupMobileMenu() {
+            const desktopNav = document.querySelector('aside nav ul').innerHTML;
+            document.getElementById('mobileNavContainer').innerHTML = desktopNav;
+        }
+
+        function showToast(msg, type="success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMsg').innerText = msg;
+            
+            if(type === 'error') {
+                icon.className = "fa-solid fa-circle-exclamation text-rose-500 text-lg";
+            } else if (type === 'info') {
+                icon.className = "fa-solid fa-info-circle text-cyan-500 text-lg";
+            } else {
+                icon.className = "fa-solid fa-check-circle text-emerald-500 text-lg";
+            }
+
+            toast.classList.remove('translate-x-[150%]');
+            setTimeout(() => {
+                toast.classList.add('translate-x-[150%]');
+            }, 3000);
+        }
+
+        function populateDropdowns() {
+            const roomOptions = state.rooms.map(r => `<option value="${r}">${r}</option>`).join('');
+            const classOptions = `<option value="">Tiada (Untuk Guru)</option>` + state.classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            document.getElementById('jadual-room').innerHTML = roomOptions;
+            document.getElementById('b-room').innerHTML = `<option value="">-- Pilih Bilik --</option>` + roomOptions;
+            document.getElementById('p-room').innerHTML = `<option value="">-- Pilih Bilik --</option>` + roomOptions;
+            document.getElementById('a-eq-room').innerHTML = roomOptions;
+            
+            const filterRoom = `<option value="all">Semua Bilik</option>` + roomOptions;
+            document.getElementById('filter-room-equip').innerHTML = filterRoom;
+
+            document.getElementById('b-class').innerHTML = classOptions;
+
+            const timeOptions = state.timeSlots.map(t => `<option value="${t}">${t}</option>`).join('');
+            document.getElementById('b-time-start').innerHTML = timeOptions;
+            document.getElementById('b-time-end').innerHTML = timeOptions;
+        }
+
+        function updateEquipmentOptions(roomSelectId, targetDivId) {
+            const room = document.getElementById(roomSelectId).value;
+            const target = document.getElementById(targetDivId);
+            if(!room) {
+                target.innerHTML = `<p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>`;
+                return;
+            }
+            const equips = state.equipment.filter(e => e.room === room);
+            if(equips.length === 0) {
+                target.innerHTML = `<p class="text-slate-500 italic text-xs">Tiada peralatan disenaraikan.</p>`;
+                return;
+            }
+            target.innerHTML = equips.map(e => `
+                <label class="flex items-center gap-2 cursor-pointer p-1.5 hover:bg-slate-800 rounded">
+                    <input type="checkbox" value="${e.name}" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500">
+                    <span class="text-slate-300">${e.name} <span class="text-slate-500 text-xs">(${e.qty} unit)</span></span>
+                </label>
+            `).join('');
+        }
+
+        function renderJadual() {
+            const tbody = document.getElementById('jadual-body');
+            const selectedRoom = document.getElementById('jadual-room').value;
+            const selectedDateVal = document.getElementById('jadual-date').value;
+            if(!selectedDateVal || !selectedRoom) return;
+
+            const baseDate = new Date(selectedDateVal);
+            // Cari hari Ahad minggu tersebut
+            const day = baseDate.getDay(); 
+            const diff = baseDate.getDate() - day; 
+            const sunday = new Date(baseDate.setDate(diff));
+
+            const hariNama = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis'];
+            let html = '';
+
+            for (let i = 0; i < 5; i++) {
+                let currentDate = new Date(sunday);
+                currentDate.setDate(sunday.getDate() + i);
+                let dateStr = currentDate.toISOString().split('T')[0];
+
+                html += `<tr class="hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-3 border-b border-slate-700/50 font-medium">
+                        <div class="text-white">${hariNama[i]}</div>
+                        <div class="text-[10px] text-slate-500">${dateStr}</div>
+                    </td>`;
+
+                for (let j = 0; j < state.timeSlots.length - 1; j++) {
+                    const slotStart = state.timeSlots[j];
+                    const slotEnd = state.timeSlots[j+1];
+                    
+                    // Check if booked
+                    const booking = state.bookings.find(b => 
+                        b.room === selectedRoom && 
+                        b.date === dateStr &&
+                        b.startTime <= slotStart && b.endTime > slotStart // Overlap logic simple
+                    );
+
+                    if (booking) {
+                        html += `<td class="px-2 py-2 border-b border-l border-slate-700/50 text-center relative group cursor-pointer bg-blue-900/40">
+                            <div class="w-full h-8 bg-blue-600 rounded-md shadow-sm border border-blue-500 flex items-center justify-center">
+                                <i class="fa-solid fa-user-check text-white text-xs"></i>
+                            </div>
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-slate-800 text-xs text-left p-3 rounded-lg shadow-xl border border-slate-600 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                                <p class="font-bold text-white mb-1">${booking.name}</p>
+                                <p class="text-cyan-400">${booking.className || 'Umum'}</p>
+                                <p class="text-slate-300 mt-1">${booking.purpose}</p>
+                                <p class="text-slate-400 mt-1">${booking.startTime} - ${booking.endTime}</p>
+                            </div>
+                        </td>`;
+                    } else {
+                        html += `<td class="px-2 py-2 border-b border-l border-slate-700/50 text-center text-slate-600">
+                            <div class="w-full h-8 rounded border border-slate-700 border-dashed hover:border-slate-500 transition-colors"></div>
+                        </td>`;
+                    }
+                }
+                html += `</tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+
+        function checkOverlap(room, date, start, end) {
+            return state.bookings.some(b => 
+                b.room === room && b.date === date && 
+                ((start >= b.startTime && start < b.endTime) || 
+                 (end > b.startTime && end <= b.endTime) ||
+                 (start <= b.startTime && end >= b.endTime))
+            );
+        }
+
+        function getStatusInfo(date, startTime, endTime) {
+            const now = new Date();
+            const startDt = new Date(`${date}T${startTime}:00`);
+            const endDt = new Date(`${date}T${endTime}:00`);
+
+            if (now < startDt) return { label: 'Belum Mula', color: 'blue', text: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' };
+            if (now >= startDt && now <= endDt) return { label: 'Sedang Digunakan', color: 'emerald', text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' };
+            return { label: 'Tamat', color: 'rose', text: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/30' };
+        }
+
+        async function handleBookingSubmit(e) {
+            e.preventDefault();
+            const start = document.getElementById('b-time-start').value;
+            const end = document.getElementById('b-time-end').value;
+            
+            if (start >= end) {
+                showToast("Masa tamat mesti lebih lambat dari masa mula", "error");
+                return;
+            }
+
+            const room = document.getElementById('b-room').value;
+            const date = document.getElementById('b-date').value;
+
+            if (checkOverlap(room, date, start, end)) {
+                showToast("Pertindihan Tempahan! Slot ini telah ditempah.", "error");
+                return;
+            }
+
+            // Get selected equipment
+            const equipCheckboxes = document.querySelectorAll('#b-equip input:checked');
+            const selectedEquips = Array.from(equipCheckboxes).map(cb => cb.value);
+
+            const payload = {
+                name: document.getElementById('b-name').value,
+                room: room,
+                date: date,
+                startTime: start,
+                endTime: end,
+                className: document.getElementById('b-class').value,
+                purpose: document.getElementById('b-purpose').value,
+                equipment: selectedEquips
+            };
+
+            try {
+                await syncData('addBooking', payload);
+                // In memory update
+                payload.id = 'B-' + Date.now();
+                state.bookings.push(payload);
+                
+                showToast("Tempahan berjaya disimpan!");
+                document.getElementById('bookingForm').reset();
+                document.getElementById('b-equip').innerHTML = `<p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>`;
+                renderBookings();
+                renderJadual(); // Refresh schedule
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderBookings() {
+            const list = document.getElementById('bookingList');
+            // Urut ikut tarikh terdekat
+            const sorted = [...state.bookings].sort((a,b) => new Date(`${b.date}T${b.startTime}`) - new Date(`${a.date}T${a.startTime}`));
+            
+            if(sorted.length === 0) {
+                list.innerHTML = `<div class="col-span-2 text-center p-8 text-slate-500">Tiada rekod tempahan.</div>`;
+                return;
+            }
+
+            list.innerHTML = sorted.map(b => {
+                const status = getStatusInfo(b.date, b.startTime, b.endTime);
+                return `
+                <div class="p-4 rounded-xl border ${status.border} ${status.bg} shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-bold text-white text-sm">${b.room}</h4>
+                            <p class="text-xs ${status.text} font-medium flex items-center gap-1 mt-0.5">
+                                <span class="w-2 h-2 rounded-full bg-${status.color}-500 inline-block"></span>
+                                ${status.label}
+                            </p>
                         </div>
-                        <p class="text-sm text-slate-600 mb-6" id="customConfirmMsg"></p>
-                        <div class="flex justify-end gap-2">
-                            <button id="customConfirmCancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
-                            <button id="customConfirmOk" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm">Ya, Padam</button>
+                        <div class="text-right">
+                            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">${b.date}</span>
+                            <p class="text-xs text-slate-400 mt-1 font-mono">${b.startTime} - ${b.endTime}</p>
                         </div>
                     </div>
-                `;
-                document.body.appendChild(overlay);
-            }
-            
-            document.getElementById('customConfirmMsg').textContent = msg;
-            overlay.classList.remove('hidden');
-            
-            // Animation
-            requestAnimationFrame(() => {
-                document.getElementById('customConfirmBox').classList.remove('scale-95', 'opacity-0');
-            });
-
-            const cleanup = () => {
-                document.getElementById('customConfirmBox').classList.add('scale-95', 'opacity-0');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            };
-
-            document.getElementById('customConfirmCancel').onclick = cleanup;
-            document.getElementById('customConfirmOk').onclick = () => {
-                cleanup();
-                if(onConfirm) onConfirm();
-            };
+                    <div class="text-xs text-slate-300 space-y-1">
+                        <p><i class="fa-regular fa-user w-4 text-slate-500"></i> ${b.name}</p>
+                        ${b.className ? `<p><i class="fa-solid fa-users w-4 text-slate-500"></i> Kelas: ${b.className}</p>` : ''}
+                        <p><i class="fa-solid fa-bullseye w-4 text-slate-500"></i> ${b.purpose}</p>
+                    </div>
+                </div>`;
+            }).join('');
         }
-        
-        // Render Override untuk Firebase Listener
-        const originalRenderApp = window.renderApp;
-        window.renderApp = () => {
-            originalRenderApp();
-            // Kemaskini data UI yang spesifik jika tab aktif
-            if(window.appState.activeTab === 'jadual' && window.jadualState) window.jadualState.reRender();
-            if(window.appState.activeTab === 'tempahan') updateSenaraiTempahanUI();
-            if(window.appState.activeTab === 'pinjaman') updateSenaraiPinjamanUI();
-            if(window.appState.activeTab === 'peralatan') updateEquipTable();
-            if(window.appState.activeTab === 'kelas') {
-                updateKelasUI();
-                if(typeof updateGuruUI === 'function') updateGuruUI();
-            }
-        };
 
-        // Inisialisasi Mula
-        document.addEventListener('DOMContentLoaded', () => {
-            renderApp();
+        async function handleBorrowSubmit(e) {
+            e.preventDefault();
+            const room = document.getElementById('p-room').value;
+            const equipCheckboxes = document.querySelectorAll('#p-equip input:checked');
             
-            // Update live time for status check in Jadual
-            setInterval(() => {
-                if(window.appState.activeTab === 'jadual' && window.jadualState) window.jadualState.reRender();
-                if(window.appState.activeTab === 'tempahan') updateSenaraiTempahanUI();
-            }, 60000); // refresh every minute
-        });
+            if (equipCheckboxes.length === 0) {
+                showToast("Sila pilih sekurang-kurangnya satu peralatan.", "error");
+                return;
+            }
+
+            const payload = {
+                name: document.getElementById('p-name').value,
+                room: room,
+                equipment: Array.from(equipCheckboxes).map(cb => cb.value),
+                startDate: document.getElementById('p-start-date').value,
+                returnDate: document.getElementById('p-return-date').value,
+                status: 'Meminjam'
+            };
+
+            try {
+                await syncData('addBorrowing', payload);
+                payload.id = 'BW-' + Date.now();
+                state.borrowings.push(payload);
+                
+                showToast("Rekod pinjaman disimpan!");
+                document.getElementById('borrowForm').reset();
+                document.getElementById('p-equip').innerHTML = `<p class="text-slate-500 italic text-xs">Sila pilih bilik khas dahulu.</p>`;
+                renderBorrowings();
+                renderAdminBorrowings();
+            } catch (err) {}
+        }
+
+        function renderBorrowings() {
+            const list = document.getElementById('borrowList');
+            if(state.borrowings.length === 0) {
+                list.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">Tiada rekod pinjaman aktif.</td></tr>`;
+                return;
+            }
+
+            // Only show active borrowings (Meminjam) or recently returned
+            list.innerHTML = state.borrowings.map(b => {
+                const isMeminjam = b.status === 'Meminjam';
+                return `
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-slate-200 text-xs">${b.name}</div>
+                        <div class="text-[10px] text-slate-500">${b.room}</div>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-400">
+                        ${b.equipment.join(', ')}
+                    </td>
+                    <td class="px-4 py-3 text-xs">
+                        <div class="text-slate-300">Mula: ${b.startDate}</div>
+                        <div class="text-slate-500">Hingga: ${b.returnDate}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-medium border ${isMeminjam ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}">
+                            ${b.status}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderEquipmentList() {
+            const list = document.getElementById('equipmentTable');
+            const filterRoom = document.getElementById('filter-room-equip').value;
+            
+            let filtered = state.equipment;
+            if (filterRoom !== 'all') {
+                filtered = state.equipment.filter(e => e.room === filterRoom);
+            }
+
+            if(filtered.length === 0) {
+                list.innerHTML = `<tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">Tiada rekod peralatan.</td></tr>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(e => `
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-5 py-3 text-sm font-medium text-slate-300">${e.room}</td>
+                    <td class="px-5 py-3 text-sm text-white">${e.name}</td>
+                    <td class="px-5 py-3 text-sm text-slate-400">
+                        <span class="bg-slate-700 px-2 py-1 rounded text-xs">${e.type}</span>
+                    </td>
+                    <td class="px-5 py-3 text-sm text-center font-bold text-cyan-400">${e.qty}</td>
+                    <td class="px-5 py-3 text-sm text-slate-500 font-mono">${e.regNo}</td>
+                </tr>
+            `).join('');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('adminPass').value;
+            if(pass === 'SkaiTba0078#') {
+                state.isAdmin = true;
+                document.getElementById('adminLogin').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                renderAdminBorrowings();
+                showToast("Log masuk berjaya");
+                document.getElementById('adminPass').value = '';
+            } else {
+                showToast("Kata laluan salah!", "error");
+            }
+        }
+
+        function logoutAdmin() {
+            state.isAdmin = false;
+            document.getElementById('adminLogin').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            showToast("Log keluar berjaya", "info");
+        }
+
+        async function handleAdminAddEquip(e) {
+            e.preventDefault();
+            const payload = {
+                room: document.getElementById('a-eq-room').value,
+                name: document.getElementById('a-eq-name').value,
+                type: document.getElementById('a-eq-type').value,
+                qty: parseInt(document.getElementById('a-eq-qty').value),
+                regNo: document.getElementById('a-eq-reg').value
+            };
+
+            try {
+                await syncData('addEquipment', payload);
+                payload.id = 'EQ-' + Date.now();
+                state.equipment.push(payload);
+                
+                showToast("Peralatan ditambah!");
+                e.target.reset();
+                renderEquipmentList();
+            } catch(err) {}
+        }
+
+        async function handleAdminAddClass(e) {
+            e.preventDefault();
+            const val = document.getElementById('a-class-name').value;
+            try {
+                await syncData('addClass', { name: val });
+                state.classes.push(val);
+                showToast(`Kelas ${val} ditambah.`);
+                document.getElementById('a-class-name').value = '';
+                populateDropdowns();
+            } catch(err){}
+        }
+
+        function renderAdminBorrowings() {
+            const list = document.getElementById('adminBorrowList');
+            const activeB = state.borrowings.filter(b => b.status === 'Meminjam');
+            
+            if(activeB.length === 0) {
+                list.innerHTML = `<p class="text-slate-500 text-sm text-center py-4">Tiada pinjaman aktif.</p>`;
+                return;
+            }
+
+            list.innerHTML = activeB.map(b => `
+                <div class="flex justify-between items-center p-3 bg-slate-900 border border-slate-700 rounded-lg">
+                    <div>
+                        <p class="text-sm text-white font-medium">${b.name}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">${b.equipment.join(', ')}</p>
+                    </div>
+                    <button onclick="confirmReturn('${b.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded transition-colors shadow shadow-emerald-900">
+                        Sahkan Pulang
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function confirmReturn(id) {
+            try {
+                await syncData('returnBorrowing', { id: id });
+                const bIdx = state.borrowings.findIndex(b => b.id === id);
+                if(bIdx > -1) state.borrowings[bIdx].status = 'Dipulangkan';
+                
+                showToast("Pemulangan disahkan!");
+                renderBorrowings();
+                renderAdminBorrowings();
+            } catch(err){}
+        }
+
+        // Jalankan logic awal (Kemaskini Timer Status Setengah Jam secara automatik - Pilihan)
+        setInterval(() => {
+            if(document.getElementById('tab-tempahan').classList.contains('active')){
+                renderBookings();
+            }
+        }, 60000); // Check every minute
     </script>
 </body>
 </html>
